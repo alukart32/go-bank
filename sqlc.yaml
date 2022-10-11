@@ -1,0 +1,11 @@
+version: "1"
+packages:
+    - name: "repo"
+      path: "./internal/usecase/repo"
+      schema: "./migrations/"
+      queries: "./internal/usecase/repo/queries"
+      engine: "postgresql"
+      emit_json_tags: true
+      emit_prepared_queries: false
+      emit_interface: false
+      emit_exact_table_names: false
