@@ -11,16 +11,23 @@ import (
 )
 
 var (
-	testDB     *sql.DB
-	testDBConf = &config.DB{
-		URI:    "postgres://postgres:postgres@localhost:5432/bank-test?sslmode=disable",
-		Driver: "postgres",
-	}
+	testDB   *sql.DB
+	testConf *config.Config
+
+	// &config.DB{
+	// 	URI:    "postgres://postgres:postgres@localhost:5432/bank-test?sslmode=disable",
+	// 	Driver: "postgres",
+	// }
 )
 
 func TestMain(m *testing.M) {
 	var err error
-	testDB, err = pqx.New(testDBConf)
+	testConf, err = config.New("test")
+	if err != nil {
+		log.Fatal("cannot get config: ", err)
+	}
+
+	testDB, err = pqx.New(&testConf.DB)
 	if err != nil {
 		log.Fatal("cannot connect to db: ", err)
 	}

@@ -3,11 +3,14 @@ package config
 import (
 	"log"
 	"os"
+	"regexp"
 	"time"
 
 	"github.com/joho/godotenv"
 	"gopkg.in/yaml.v3"
 )
+
+const projectDirName = "bank"
 
 type (
 	DB struct {
@@ -26,8 +29,14 @@ type (
 	}
 )
 
-func New() (*Config, error) {
-	err := godotenv.Load()
+func New(profile string) (*Config, error) {
+	if len(profile) == 0 {
+		profile = getEnvPath() + "/config/.env"
+	} else {
+		profile = getEnvPath() + "/config/.env." + profile
+	}
+
+	err := godotenv.Load(profile)
 	if err != nil {
 		return nil, err
 	}
@@ -42,6 +51,14 @@ func New() (*Config, error) {
 	return &Config{
 		DB: *db,
 	}, nil
+}
+
+// GetEnvPath define env vars from .env
+func getEnvPath() string {
+	re := regexp.MustCompile(`^(.*` + projectDirName + `)`)
+	cwd, _ := os.Getwd()
+	rootPath := re.Find([]byte(cwd))
+	return string(rootPath)
 }
 
 // Print outputs the configuration in YAML format.
