@@ -3,48 +3,23 @@ package repo
 import (
 	"context"
 	"database/sql"
-	"log"
-	"os"
 	"testing"
 	"time"
 
-	"alukart32.com/bank/config"
-	"alukart32.com/bank/pkg/pqx"
 	"alukart32.com/bank/pkg/random"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-var (
-	db      *sql.DB
-	queries *Queries
-	dbConf  = &config.DB{
-		URI:    "postgres://postgres:postgres@localhost:5432/bank-test?sslmode=disable",
-		Driver: "postgres",
-	}
-)
-
-func TestMain(m *testing.M) {
-	var err error
-	db, err = pqx.New(dbConf)
-	if err != nil {
-		log.Fatal("cannot connect to db: ", err)
-	}
-
-	queries = New(db)
-
-	os.Exit(m.Run())
-}
-
 func TestCreateAccount(t *testing.T) {
-	tx, err := db.Begin()
+	tx, err := testDB.Begin()
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer tx.Rollback()
 
-	createRandomAccount(t, queries.WithTx(tx))
+	createRandomAccount(t, New(tx))
 
 	if err = tx.Rollback(); err != nil {
 		t.Fatal(err)
@@ -52,12 +27,12 @@ func TestCreateAccount(t *testing.T) {
 }
 
 func TestGetAccount(t *testing.T) {
-	tx, err := db.Begin()
+	tx, err := testDB.Begin()
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer tx.Rollback()
-	qtx := queries.WithTx(tx)
+	qtx := New(tx)
 
 	creationTime := time.Now()
 	account1 := createRandomAccount(t, qtx)
@@ -76,12 +51,12 @@ func TestGetAccount(t *testing.T) {
 }
 
 func TestUpdateAccount(t *testing.T) {
-	tx, err := db.Begin()
+	tx, err := testDB.Begin()
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer tx.Rollback()
-	qtx := queries.WithTx(tx)
+	qtx := New(tx)
 
 	account := createRandomAccount(t, qtx)
 
@@ -98,12 +73,12 @@ func TestUpdateAccount(t *testing.T) {
 }
 
 func TestDeleteAccount(t *testing.T) {
-	tx, err := db.Begin()
+	tx, err := testDB.Begin()
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer tx.Rollback()
-	qtx := queries.WithTx(tx)
+	qtx := New(tx)
 
 	account1 := createRandomAccount(t, qtx)
 
@@ -122,12 +97,12 @@ func TestDeleteAccount(t *testing.T) {
 }
 
 func TestListAccounts(t *testing.T) {
-	tx, err := db.Begin()
+	tx, err := testDB.Begin()
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer tx.Rollback()
-	qtx := queries.WithTx(tx)
+	qtx := New(tx)
 
 	for i := 0; i < 10; i++ {
 		createRandomAccount(t, qtx)
@@ -152,12 +127,12 @@ func TestListAccounts(t *testing.T) {
 }
 
 func TestCreateEntry(t *testing.T) {
-	tx, err := db.Begin()
+	tx, err := testDB.Begin()
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer tx.Rollback()
-	qtx := queries.WithTx(tx)
+	qtx := New(tx)
 
 	account := createRandomAccount(t, qtx)
 
@@ -185,12 +160,12 @@ func TestCreateEntry(t *testing.T) {
 }
 
 func TestGetEntry(t *testing.T) {
-	tx, err := db.Begin()
+	tx, err := testDB.Begin()
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer tx.Rollback()
-	qtx := queries.WithTx(tx)
+	qtx := New(tx)
 
 	account := createRandomAccount(t, qtx)
 
@@ -213,12 +188,12 @@ func TestGetEntry(t *testing.T) {
 }
 
 func TestListEntriesByAccount(t *testing.T) {
-	tx, err := db.Begin()
+	tx, err := testDB.Begin()
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer tx.Rollback()
-	qtx := queries.WithTx(tx)
+	qtx := New(tx)
 
 	account := createRandomAccount(t, qtx)
 	for i := 0; i < 4; i++ {
@@ -250,12 +225,12 @@ func TestListEntriesByAccount(t *testing.T) {
 }
 
 func TestUpdateEntry(t *testing.T) {
-	tx, err := db.Begin()
+	tx, err := testDB.Begin()
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer tx.Rollback()
-	qtx := queries.WithTx(tx)
+	qtx := New(tx)
 
 	account := createRandomAccount(t, qtx)
 
@@ -282,12 +257,12 @@ func TestUpdateEntry(t *testing.T) {
 }
 
 func TestDeleteEntry(t *testing.T) {
-	tx, err := db.Begin()
+	tx, err := testDB.Begin()
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer tx.Rollback()
-	qtx := queries.WithTx(tx)
+	qtx := New(tx)
 
 	account := createRandomAccount(t, qtx)
 
@@ -309,12 +284,12 @@ func TestDeleteEntry(t *testing.T) {
 }
 
 func TestCreateTransfer(t *testing.T) {
-	tx, err := db.Begin()
+	tx, err := testDB.Begin()
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer tx.Rollback()
-	qtx := queries.WithTx(tx)
+	qtx := New(tx)
 
 	amount := random.Int64(1, 200000)
 	fromAccount := createRandomAccount(t, qtx)
@@ -336,12 +311,12 @@ func TestCreateTransfer(t *testing.T) {
 }
 
 func TestGetTransfer(t *testing.T) {
-	tx, err := db.Begin()
+	tx, err := testDB.Begin()
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer tx.Rollback()
-	qtx := queries.WithTx(tx)
+	qtx := New(tx)
 
 	amount := random.Int64(1, 200000)
 	fromAccount := createRandomAccount(t, qtx)
@@ -366,12 +341,12 @@ func TestGetTransfer(t *testing.T) {
 }
 
 func TestListTransfersByFromAccount(t *testing.T) {
-	tx, err := db.Begin()
+	tx, err := testDB.Begin()
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer tx.Rollback()
-	qtx := queries.WithTx(tx)
+	qtx := New(tx)
 
 	amount := random.Int64(1, 100)
 	fromAccount := createRandomAccount(t, qtx)
@@ -405,12 +380,12 @@ func TestListTransfersByFromAccount(t *testing.T) {
 }
 
 func TestListTransfersByToAccount(t *testing.T) {
-	tx, err := db.Begin()
+	tx, err := testDB.Begin()
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer tx.Rollback()
-	qtx := queries.WithTx(tx)
+	qtx := New(tx)
 
 	amount := random.Int64(1, 100)
 	toAccount := createRandomAccount(t, qtx)
@@ -444,12 +419,12 @@ func TestListTransfersByToAccount(t *testing.T) {
 }
 
 func TestUpdateTransfer(t *testing.T) {
-	tx, err := db.Begin()
+	tx, err := testDB.Begin()
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer tx.Rollback()
-	qtx := queries.WithTx(tx)
+	qtx := New(tx)
 
 	amount := random.Int64(1, 200000)
 	fromAccount := createRandomAccount(t, qtx)
@@ -475,12 +450,12 @@ func TestUpdateTransfer(t *testing.T) {
 }
 
 func TestDeleteTransfer(t *testing.T) {
-	tx, err := db.Begin()
+	tx, err := testDB.Begin()
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer tx.Rollback()
-	qtx := queries.WithTx(tx)
+	qtx := New(tx)
 
 	amount := random.Int64(1, 200000)
 	fromAccount := createRandomAccount(t, qtx)
