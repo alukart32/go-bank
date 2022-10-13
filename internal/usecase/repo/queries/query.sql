@@ -13,6 +13,12 @@ INSERT INTO accounts (
 SELECT * FROM accounts
 WHERE id = $1;
 
+-- name: AddAccountBalance :one
+UPDATE accounts
+SET balance = balance + sqlc.arg(amount)
+WHERE id = sqlc.arg(id)
+RETURNING *;
+
 -- name: ListAccounts :many
 SELECT A.id, A.owner, A.balance, A.currency, A.created_at FROM accounts as A
 JOIN (
