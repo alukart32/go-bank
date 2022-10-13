@@ -10,7 +10,7 @@ import (
 	_ "github.com/lib/pq"
 )
 
-// db connection pool
+// db connection db
 var (
 	db   *sql.DB
 	once sync.Once
