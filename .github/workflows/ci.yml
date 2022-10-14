@@ -1,8 +1,7 @@
 name: bank-cicd
 
 env:
-  GO_VERSION: 1.19.1
-  GO_MIGRATE_VERSION: v4.12.2
+  GO_MIGRATE_VERSION: "v4.12.2"
 
 on:
   push:
@@ -35,7 +34,7 @@ jobs:
     - name: Set up Go
       uses: actions/setup-go@v3
       with:
-        go-version: $GO_VERSION
+        go-version: 1.19.1
 
     - name: Install golang-migrate
       run: |
