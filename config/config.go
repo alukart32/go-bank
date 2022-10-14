@@ -33,7 +33,7 @@ func New(profile string) (*Config, error) {
 	if len(profile) == 0 {
 		profile = getEnvPath() + "/config/.env"
 	} else {
-		profile = getEnvPath() + "/config/.env." + profile
+		profile = getEnvPath() + "/config/" + profile + ".env"
 	}
 
 	err := godotenv.Load(profile)
