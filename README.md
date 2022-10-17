@@ -31,7 +31,7 @@
 Для реализации системы предлагается следующий стек технологий:
 
 1. https://github.com/jackc/pgx
-2. https://github.com/joho/godotenv
+2. github.com/ilyakaznacheev/cleanenv
 3. https://github.com/golang-migrate/migrate
 4. https://github.com/kyleconroy/sqlc
-
+5. https://github.com/gin-gonic/gin
