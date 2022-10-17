@@ -2,27 +2,70 @@ package repo
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
+	"log"
+	"os"
 	"testing"
 
+	"alukart32.com/bank/config"
+	"alukart32.com/bank/entity"
+	"alukart32.com/bank/pkg/postgres"
 	"alukart32.com/bank/pkg/random"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 )
 
-func TestTransfer(t *testing.T) {
-	sqlRepo := NewSQLRepo(testDB)
+var (
+	testDB   *sql.DB
+	testConf *config.Config
+)
 
-	fromAccount := createRandomAccount(t, sqlRepo.Queries)
-	toAccount := createRandomAccount(t, sqlRepo.Queries)
+func TestMain(m *testing.M) {
+	var err error
+	testConf, err = config.New("test")
+	if err != nil {
+		log.Fatal("cannot get config: ", err)
+	}
+
+	testDB, err = postgres.New(&testConf.DB)
+	if err != nil {
+		log.Fatal("cannot connect to db: ", err)
+	}
+	os.Exit(m.Run())
+}
+func TestTransfer(t *testing.T) {
+	repoTransfer := NewTransferSQLRepo(testDB)
+	repoAccount := NewAccountSQLRepo(testDB)
+
+	fromAccount, err := repoAccount.Create(context.Background(), &entity.Account{
+		ID:       uuid.New(),
+		Owner:    "owner_test_1",
+		Balance:  random.Int64(10_000, 100_000_000),
+		Currency: entity.CurrencyRUB,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	toAccount, err := repoAccount.Create(context.Background(), &entity.Account{
+		ID:       uuid.New(),
+		Owner:    "owner_test_2",
+		Balance:  random.Int64(10_000, 10_000_000),
+		Currency: entity.CurrencyRUB,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	n := 5
-	amount := random.Int64(1, 200)
+	amount := random.Int64(1, 2000)
 	errors := make(chan error)
-	results := make(chan TransferTxResult)
+	results := make(chan *entity.TransferRes)
 
 	for i := 0; i < n; i++ {
 		go func() {
-			t, err := sqlRepo.Transfer(context.Background(), TransferTxParams{
+			t, err := repoTransfer.Create(context.Background(), &entity.Transfer{
 				FromAccountID: fromAccount.ID,
 				ToAccountID:   toAccount.ID,
 				Amount:        amount,
@@ -92,10 +135,10 @@ func TestTransfer(t *testing.T) {
 	}
 
 	// check the final updated balance
-	updatedFromAccount, err := sqlRepo.GetAccount(context.Background(), fromAccount.ID)
+	updatedFromAccount, err := repoAccount.Get(context.Background(), fromAccount.ID)
 	require.NoError(t, err)
 
-	updatedToAccount, err := sqlRepo.GetAccount(context.Background(), toAccount.ID)
+	updatedToAccount, err := repoAccount.Get(context.Background(), toAccount.ID)
 	require.NoError(t, err)
 
 	require.Equal(t, fromAccount.Balance-int64(n)*amount, updatedFromAccount.Balance)
@@ -103,10 +146,28 @@ func TestTransfer(t *testing.T) {
 }
 
 func TestTransferDeadlock(t *testing.T) {
-	sqlRepo := NewSQLRepo(testDB)
+	repoTransfer := NewTransferSQLRepo(testDB)
+	repoAccount := NewAccountSQLRepo(testDB)
 
-	fromAccount := createRandomAccount(t, sqlRepo.Queries)
-	toAccount := createRandomAccount(t, sqlRepo.Queries)
+	fromAccount, err := repoAccount.Create(context.Background(), &entity.Account{
+		ID:       uuid.New(),
+		Owner:    "owner_test_1",
+		Balance:  random.Int64(10_000, 100_000_000),
+		Currency: entity.CurrencyRUB,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	toAccount, err := repoAccount.Create(context.Background(), &entity.Account{
+		ID:       uuid.New(),
+		Owner:    "owner_test_2",
+		Balance:  random.Int64(10_000, 10_000_000),
+		Currency: entity.CurrencyRUB,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
 	fmt.Printf(">> before: [ fromAccount.Balance: %v, toAccount.Balance: %v ]\n", fromAccount.Balance, toAccount.Balance)
 
 	n := 10
@@ -121,7 +182,7 @@ func TestTransferDeadlock(t *testing.T) {
 		}
 
 		go func() {
-			_, err := sqlRepo.Transfer(context.Background(), TransferTxParams{
+			_, err := repoTransfer.Create(context.Background(), &entity.Transfer{
 				FromAccountID: fromAccountID,
 				ToAccountID:   toAccountID,
 				Amount:        amount,
@@ -137,10 +198,10 @@ func TestTransferDeadlock(t *testing.T) {
 	}
 
 	// check the final updated balance
-	updatedFromAccount, err := sqlRepo.GetAccount(context.Background(), fromAccount.ID)
+	updatedFromAccount, err := repoAccount.Get(context.Background(), fromAccount.ID)
 	require.NoError(t, err)
 
-	updatedToAccount, err := sqlRepo.GetAccount(context.Background(), toAccount.ID)
+	updatedToAccount, err := repoAccount.Get(context.Background(), toAccount.ID)
 	require.NoError(t, err)
 
 	require.Equal(t, fromAccount.Balance, updatedFromAccount.Balance)
