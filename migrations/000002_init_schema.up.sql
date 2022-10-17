@@ -1,0 +1,1 @@
+ALTER TABLE "accounts" ALTER COLUMN "created_at" SET NOT NULL;
