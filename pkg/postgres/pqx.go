@@ -1,4 +1,4 @@
-package pqx
+package postgres
 
 import (
 	"database/sql"
