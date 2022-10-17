@@ -3,7 +3,7 @@
 //   sqlc v1.15.0
 // source: query.sql
 
-package repo
+package db
 
 import (
 	"context"
@@ -36,7 +36,7 @@ func (q *Queries) AddAccountBalance(ctx context.Context, arg AddAccountBalancePa
 	return i, err
 }
 
-const createAccount = `-- name: CreateAccount :exec
+const createAccount = `-- name: CreateAccount :one
 INSERT INTO accounts (
     id,
     owner,
@@ -44,7 +44,7 @@ INSERT INTO accounts (
     currency
 ) VALUES (
   $1, $2, $3, $4
-)
+) RETURNING id, owner, balance, currency, created_at
 `
 
 type CreateAccountParams struct {
@@ -55,14 +55,22 @@ type CreateAccountParams struct {
 }
 
 // Account
-func (q *Queries) CreateAccount(ctx context.Context, arg CreateAccountParams) error {
-	_, err := q.db.ExecContext(ctx, createAccount,
+func (q *Queries) CreateAccount(ctx context.Context, arg CreateAccountParams) (Account, error) {
+	row := q.db.QueryRowContext(ctx, createAccount,
 		arg.ID,
 		arg.Owner,
 		arg.Balance,
 		arg.Currency,
 	)
-	return err
+	var i Account
+	err := row.Scan(
+		&i.ID,
+		&i.Owner,
+		&i.Balance,
+		&i.Currency,
+		&i.CreatedAt,
+	)
+	return i, err
 }
 
 const createEntry = `-- name: CreateEntry :one
@@ -388,22 +396,6 @@ func (q *Queries) ListTransfersByToAccount(ctx context.Context, arg ListTransfer
 	return items, nil
 }
 
-const updateAccount = `-- name: UpdateAccount :exec
-UPDATE accounts
-SET balance = $2
-WHERE id = $1
-`
-
-type UpdateAccountParams struct {
-	ID      uuid.UUID `json:"id"`
-	Balance int64     `json:"balance"`
-}
-
-func (q *Queries) UpdateAccount(ctx context.Context, arg UpdateAccountParams) error {
-	_, err := q.db.ExecContext(ctx, updateAccount, arg.ID, arg.Balance)
-	return err
-}
-
 const updateEntry = `-- name: UpdateEntry :exec
 UPDATE entries
 SET amount = $2
@@ -417,21 +409,5 @@ type UpdateEntryParams struct {
 
 func (q *Queries) UpdateEntry(ctx context.Context, arg UpdateEntryParams) error {
 	_, err := q.db.ExecContext(ctx, updateEntry, arg.ID, arg.Amount)
-	return err
-}
-
-const updateTransfer = `-- name: UpdateTransfer :exec
-UPDATE transfers
-SET amount = $2
-WHERE id = $1
-`
-
-type UpdateTransferParams struct {
-	ID     int64 `json:"id"`
-	Amount int64 `json:"amount"`
-}
-
-func (q *Queries) UpdateTransfer(ctx context.Context, arg UpdateTransferParams) error {
-	_, err := q.db.ExecContext(ctx, updateTransfer, arg.ID, arg.Amount)
 	return err
 }

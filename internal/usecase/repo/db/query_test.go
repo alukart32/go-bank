@@ -1,17 +1,39 @@
-package repo
+package db
 
 import (
 	"context"
 	"database/sql"
+	"log"
+	"os"
 	"testing"
 	"time"
 
+	"alukart32.com/bank/config"
+	"alukart32.com/bank/pkg/postgres"
 	"alukart32.com/bank/pkg/random"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
+var (
+	testDB   *sql.DB
+	testConf *config.Config
+)
+
+func TestMain(m *testing.M) {
+	var err error
+	testConf, err = config.New("test")
+	if err != nil {
+		log.Fatal("cannot get config: ", err)
+	}
+
+	testDB, err = postgres.New(&testConf.DB)
+	if err != nil {
+		log.Fatal("cannot connect to db: ", err)
+	}
+	os.Exit(m.Run())
+}
 func TestCreateAccount(t *testing.T) {
 	tx, err := testDB.Begin()
 	if err != nil {
@@ -43,7 +65,7 @@ func TestGetAccount(t *testing.T) {
 	assert.Equal(t, account1.Owner, account2.Owner)
 	assert.Equal(t, account1.Balance, account2.Balance)
 	assert.Equal(t, account1.Currency, account2.Currency)
-	require.WithinDuration(t, creationTime, account2.CreatedAt.Time, time.Second)
+	require.WithinDuration(t, creationTime, account2.CreatedAt, time.Second)
 
 	if err = tx.Rollback(); err != nil {
 		t.Fatal(err)
@@ -60,13 +82,16 @@ func TestUpdateAccount(t *testing.T) {
 
 	account := createRandomAccount(t, qtx)
 
-	arg := UpdateAccountParams{
-		ID:      account.ID,
-		Balance: random.Int64(1, 2000),
+	amount := -random.Int64(1, 2000)
+	arg := AddAccountBalanceParams{
+		ID:     account.ID,
+		Amount: amount,
 	}
-	err = qtx.UpdateAccount(context.Background(), arg)
+	updatedAccount, err := qtx.AddAccountBalance(context.Background(), arg)
 
 	require.NoError(t, err)
+	assert.Equal(t, account.Balance+amount, updatedAccount.Balance)
+
 	if err = tx.Rollback(); err != nil {
 		t.Fatal(err)
 	}
@@ -136,23 +161,22 @@ func TestCreateEntry(t *testing.T) {
 
 	account := createRandomAccount(t, qtx)
 
-	change := -random.Int64(1, 2000)
-	newBalance := account.Balance + change
-	updateArg := UpdateAccountParams{
-		ID:      account.ID,
-		Balance: newBalance,
+	amount := -random.Int64(1, 2000)
+	addAccountBalance := AddAccountBalanceParams{
+		ID:     account.ID,
+		Amount: amount,
 	}
-	err = qtx.UpdateAccount(context.Background(), updateArg)
+	_, err = qtx.AddAccountBalance(context.Background(), addAccountBalance)
 	require.NoError(t, err)
 
 	arg := CreateEntryParams{
 		AccountID: account.ID,
-		Amount:    change,
+		Amount:    amount,
 	}
 	r, err := qtx.CreateEntry(context.Background(), arg)
 	require.NoError(t, err)
 	assert.Equal(t, account.ID, r.AccountID)
-	assert.Equal(t, change, r.Amount)
+	assert.Equal(t, amount, r.Amount)
 
 	if err = tx.Rollback(); err != nil {
 		t.Fatal(err)
@@ -350,7 +374,7 @@ func TestListTransfersByFromAccount(t *testing.T) {
 
 	amount := random.Int64(1, 100)
 	fromAccount := createRandomAccount(t, qtx)
-	toAccounts := make([]CreateAccountParams, 5)
+	toAccounts := make([]Account, 5)
 	for i := 0; i < 5; i++ {
 		toAccounts[i] = createRandomAccount(t, qtx)
 
@@ -389,7 +413,7 @@ func TestListTransfersByToAccount(t *testing.T) {
 
 	amount := random.Int64(1, 100)
 	toAccount := createRandomAccount(t, qtx)
-	fromAccounts := make([]CreateAccountParams, 5)
+	fromAccounts := make([]Account, 5)
 	for i := 0; i < 5; i++ {
 		fromAccounts[i] = createRandomAccount(t, qtx)
 
@@ -412,37 +436,6 @@ func TestListTransfersByToAccount(t *testing.T) {
 			t.Errorf("get wrong transfer; expect toAccount.ID: %v, actual %v", toAccount.ID, v.FromAccountID)
 		}
 	}
-
-	if err = tx.Rollback(); err != nil {
-		t.Fatal(err)
-	}
-}
-
-func TestUpdateTransfer(t *testing.T) {
-	tx, err := testDB.Begin()
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer tx.Rollback()
-	qtx := New(tx)
-
-	amount := random.Int64(1, 200000)
-	fromAccount := createRandomAccount(t, qtx)
-	toAccount := createRandomAccount(t, qtx)
-
-	r, err := qtx.CreateTransfer(context.Background(), CreateTransferParams{
-		FromAccountID: fromAccount.ID,
-		ToAccountID:   toAccount.ID,
-		Amount:        amount,
-	})
-	require.NoError(t, err)
-
-	newAmmount := random.Int64(1, 10000)
-	err = qtx.UpdateTransfer(context.Background(), UpdateTransferParams{
-		ID:     r.ID,
-		Amount: newAmmount,
-	})
-	require.NoError(t, err)
 
 	if err = tx.Rollback(); err != nil {
 		t.Fatal(err)
@@ -477,20 +470,20 @@ func TestDeleteTransfer(t *testing.T) {
 }
 
 // TODO: replace with golden files
-func createRandomAccount(t *testing.T, queries *Queries) CreateAccountParams {
+func createRandomAccount(t *testing.T, queries *Queries) Account {
 	arg := CreateAccountParams{
 		ID:       uuid.New(),
 		Owner:    random.String(20),
-		Balance:  random.Int64(1, 100000),
+		Balance:  random.Int64(1, 900000),
 		Currency: Currency(random.GetString([]string{string(CurrencyRUB), string(CurrencyUSD)}...)),
 	}
 
-	err := queries.CreateAccount(context.Background(), arg)
+	acc, err := queries.CreateAccount(context.Background(), arg)
 	if err != nil {
 		t.Error(err)
 	}
 
 	require.NoError(t, err)
 
-	return arg
+	return acc
 }

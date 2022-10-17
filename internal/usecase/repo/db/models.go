@@ -2,10 +2,9 @@
 // versions:
 //   sqlc v1.15.0
 
-package repo
+package db
 
 import (
-	"database/sql"
 	"database/sql/driver"
 	"fmt"
 	"time"
@@ -56,11 +55,11 @@ func (ns NullCurrency) Value() (driver.Value, error) {
 }
 
 type Account struct {
-	ID        uuid.UUID    `json:"id"`
-	Owner     string       `json:"owner"`
-	Balance   int64        `json:"balance"`
-	Currency  Currency     `json:"currency"`
-	CreatedAt sql.NullTime `json:"created_at"`
+	ID        uuid.UUID `json:"id"`
+	Owner     string    `json:"owner"`
+	Balance   int64     `json:"balance"`
+	Currency  Currency  `json:"currency"`
+	CreatedAt time.Time `json:"created_at"`
 }
 
 type Entry struct {

@@ -1,5 +1,5 @@
 -- Account
--- name: CreateAccount :exec
+-- name: CreateAccount :one
 INSERT INTO accounts (
     id,
     owner,
@@ -7,7 +7,7 @@ INSERT INTO accounts (
     currency
 ) VALUES (
   $1, $2, $3, $4
-);
+) RETURNING *;
 
 -- name: GetAccount :one
 SELECT * FROM accounts
@@ -27,11 +27,6 @@ JOIN (
     OFFSET $2
   ) as P
   ON P.id = A.id;
-
--- name: UpdateAccount :exec
-UPDATE accounts
-SET balance = $2
-WHERE id = $1;
 
 -- name: DeleteAccount :exec
 DELETE FROM accounts
@@ -106,11 +101,6 @@ JOIN (
     OFFSET $3
   ) as P
   ON P.id = T.id;
-
--- name: UpdateTransfer :exec
-UPDATE transfers
-SET amount = $2
-WHERE id = $1;
 
 -- name: DeleteTransfer :exec
 DELETE FROM transfers
