@@ -11,6 +11,8 @@ type Transfer struct {
 	FromAccountID uuid.UUID `json:"from_account_id"`
 	ToAccountID   uuid.UUID `json:"to_account_id"`
 	Amount        int64     `json:"amount"`
+	FromEntryID   int64     `json:"from_entry_id"`
+	ToEntryID     int64     `json:"to_entry_id"`
 	CreatedAt     time.Time `json:"created_at"`
 }
 
