@@ -3,16 +3,17 @@ package repo
 import (
 	"context"
 	"database/sql"
-	"fmt"
 	"log"
 	"os"
 	"testing"
 
 	"alukart32.com/bank/config"
 	"alukart32.com/bank/entity"
+	"alukart32.com/bank/internal/usecase"
 	"alukart32.com/bank/pkg/postgres"
 	"alukart32.com/bank/pkg/random"
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -168,7 +169,6 @@ func TestTransferDeadlock(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	fmt.Printf(">> before: [ fromAccount.Balance: %v, toAccount.Balance: %v ]\n", fromAccount.Balance, toAccount.Balance)
 
 	n := 10
 	amount := random.Int64(1, 200)
@@ -206,4 +206,287 @@ func TestTransferDeadlock(t *testing.T) {
 
 	require.Equal(t, fromAccount.Balance, updatedFromAccount.Balance)
 	require.Equal(t, toAccount.Balance, updatedToAccount.Balance)
+}
+
+func TestTransferGet(t *testing.T) {
+	repoTransfer := NewTransferSQLRepo(testDB)
+	repoAccount := NewAccountSQLRepo(testDB)
+
+	fromAccount, err := repoAccount.Create(context.Background(), &entity.Account{
+		ID:       uuid.New(),
+		Owner:    "owner_test_1",
+		Balance:  random.Int64(10_000, 100_000_000),
+		Currency: entity.CurrencyRUB,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	toAccount, err := repoAccount.Create(context.Background(), &entity.Account{
+		ID:       uuid.New(),
+		Owner:    "owner_test_2",
+		Balance:  random.Int64(10_000, 10_000_000),
+		Currency: entity.CurrencyRUB,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	amount := random.Int64(1, 100)
+	createdTransfer, err := repoTransfer.Create(context.Background(), &entity.Transfer{
+		FromAccountID: fromAccount.ID,
+		ToAccountID:   toAccount.ID,
+		Amount:        amount,
+	})
+	require.NoError(t, err)
+
+	transfer, err := repoTransfer.Get(context.Background(), createdTransfer.Transfer.ID)
+	require.NoError(t, err)
+	assert.Equal(t, fromAccount.ID, transfer.FromAccountID)
+	assert.Equal(t, toAccount.ID, transfer.ToAccountID)
+	assert.Equal(t, amount, transfer.Amount)
+}
+
+func TestTransferListByFromAccount(t *testing.T) {
+	repoTransfer := NewTransferSQLRepo(testDB)
+	repoAccount := NewAccountSQLRepo(testDB)
+
+	fromAccount, err := repoAccount.Create(context.Background(), &entity.Account{
+		ID:       uuid.New(),
+		Owner:    "owner_test_1",
+		Balance:  random.Int64(10_000, 100_000_000),
+		Currency: entity.CurrencyRUB,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	toAccount, err := repoAccount.Create(context.Background(), &entity.Account{
+		ID:       uuid.New(),
+		Owner:    "owner_test_2",
+		Balance:  random.Int64(10_000, 10_000_000),
+		Currency: entity.CurrencyRUB,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	n := 5
+	errors := make(chan error)
+
+	for i := 0; i < n; i++ {
+		go func() {
+			_, err := repoTransfer.Create(context.Background(), &entity.Transfer{
+				FromAccountID: fromAccount.ID,
+				ToAccountID:   toAccount.ID,
+				Amount:        random.Int64(1, 2000),
+			})
+
+			errors <- err
+		}()
+	}
+
+	for i := 0; i < n; i++ {
+		err := <-errors
+		require.NoError(t, err)
+	}
+
+	transfers, err := repoTransfer.List(context.Background(), usecase.ListTransferParams{
+		FromAccountId: fromAccount.ID,
+		Mode:          usecase.ListFromAccount,
+		PaggingParams: usecase.PaggingParams{
+			Limit: int32(n),
+		},
+	})
+
+	require.NoError(t, err)
+	for _, v := range transfers {
+		if v.FromAccountID != fromAccount.ID {
+			t.Errorf("get transfer not for account: %v, got %v", fromAccount.ID, v.FromAccountID)
+		}
+	}
+}
+
+func TestTransferListByToAccount(t *testing.T) {
+	repoTransfer := NewTransferSQLRepo(testDB)
+	repoAccount := NewAccountSQLRepo(testDB)
+
+	fromAccount, err := repoAccount.Create(context.Background(), &entity.Account{
+		ID:       uuid.New(),
+		Owner:    "owner_test_1",
+		Balance:  random.Int64(10_000, 100_000_000),
+		Currency: entity.CurrencyRUB,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	toAccount, err := repoAccount.Create(context.Background(), &entity.Account{
+		ID:       uuid.New(),
+		Owner:    "owner_test_2",
+		Balance:  random.Int64(10_000, 10_000_000),
+		Currency: entity.CurrencyRUB,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	n := 5
+	errors := make(chan error)
+
+	for i := 0; i < n; i++ {
+		go func() {
+			_, err := repoTransfer.Create(context.Background(), &entity.Transfer{
+				FromAccountID: fromAccount.ID,
+				ToAccountID:   toAccount.ID,
+				Amount:        random.Int64(1, 2000),
+			})
+
+			errors <- err
+		}()
+	}
+
+	for i := 0; i < n; i++ {
+		err := <-errors
+		require.NoError(t, err)
+	}
+
+	transfers, err := repoTransfer.List(context.Background(), usecase.ListTransferParams{
+		ToAccountId: toAccount.ID,
+		Mode:        usecase.ListToAccount,
+		PaggingParams: usecase.PaggingParams{
+			Limit: int32(n),
+		},
+	})
+
+	require.NoError(t, err)
+	for _, v := range transfers {
+		if v.ToAccountID != toAccount.ID {
+			t.Errorf("get transfer not for account: %v, got %v", toAccount.ID, v.ToAccountID)
+		}
+	}
+}
+
+func TestTransferListByAccounts(t *testing.T) {
+	repoTransfer := NewTransferSQLRepo(testDB)
+	repoAccount := NewAccountSQLRepo(testDB)
+
+	fromAccount, err := repoAccount.Create(context.Background(), &entity.Account{
+		ID:       uuid.New(),
+		Owner:    "owner_test_1",
+		Balance:  random.Int64(10_000, 100_000_000),
+		Currency: entity.CurrencyRUB,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	toAccount, err := repoAccount.Create(context.Background(), &entity.Account{
+		ID:       uuid.New(),
+		Owner:    "owner_test_2",
+		Balance:  random.Int64(10_000, 10_000_000),
+		Currency: entity.CurrencyRUB,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	n := 5
+	errors := make(chan error)
+
+	for i := 0; i < n; i++ {
+		go func() {
+			_, err := repoTransfer.Create(context.Background(), &entity.Transfer{
+				FromAccountID: fromAccount.ID,
+				ToAccountID:   toAccount.ID,
+				Amount:        random.Int64(1, 2000),
+			})
+
+			errors <- err
+		}()
+	}
+
+	for i := 0; i < n; i++ {
+		err := <-errors
+		require.NoError(t, err)
+	}
+
+	transfers, err := repoTransfer.List(context.Background(), usecase.ListTransferParams{
+		FromAccountId: fromAccount.ID,
+		ToAccountId:   toAccount.ID,
+		Mode:          usecase.ListByAccounts,
+		PaggingParams: usecase.PaggingParams{
+			Limit: int32(n),
+		},
+	})
+
+	require.NoError(t, err)
+	for _, v := range transfers {
+		if v.ToAccountID != toAccount.ID || v.FromAccountID != fromAccount.ID {
+			t.Errorf("get transfer not for fromAccount: %v and toAccount: %v, got %v, %v",
+				fromAccount.ID, toAccount.ID, v.FromAccountID, v.ToAccountID)
+		}
+	}
+}
+
+func TestTransferRollback(t *testing.T) {
+	repoTransfer := NewTransferSQLRepo(testDB)
+	repoAccount := NewAccountSQLRepo(testDB)
+
+	fromAccount, err := repoAccount.Create(context.Background(), &entity.Account{
+		ID:       uuid.New(),
+		Owner:    "owner_test_1",
+		Balance:  random.Int64(10_000, 100_000_000),
+		Currency: entity.CurrencyRUB,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	toAccount, err := repoAccount.Create(context.Background(), &entity.Account{
+		ID:       uuid.New(),
+		Owner:    "owner_test_2",
+		Balance:  random.Int64(10_000, 10_000_000),
+		Currency: entity.CurrencyRUB,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	n := 5
+	amount := random.Int64(1, 2000)
+	errors := make(chan error)
+	results := make(chan *entity.TransferRes, n)
+
+	for i := 0; i < n; i++ {
+		go func() {
+			t, err := repoTransfer.Create(context.Background(), &entity.Transfer{
+				FromAccountID: fromAccount.ID,
+				ToAccountID:   toAccount.ID,
+				Amount:        amount,
+			})
+
+			errors <- err
+			results <- t
+		}()
+	}
+
+	for i := 0; i < n; i++ {
+		err := <-errors
+		require.NoError(t, err)
+	}
+
+	close(results)
+
+	for v := range results {
+		err = repoTransfer.Rollback(context.Background(), v.Transfer.ID)
+		require.NoError(t, err)
+	}
+	fromAccountUpdated, err := repoAccount.Get(context.Background(), fromAccount.ID)
+	require.NoError(t, err)
+	assert.Equal(t, fromAccount.Balance, fromAccountUpdated.Balance)
+
+	toAccountUpdated, err := repoAccount.Get(context.Background(), toAccount.ID)
+	require.NoError(t, err)
+	assert.Equal(t, toAccount.Balance, toAccountUpdated.Balance)
 }
