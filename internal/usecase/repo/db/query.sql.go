@@ -7,6 +7,7 @@ package db
 
 import (
 	"context"
+	"time"
 
 	"github.com/google/uuid"
 )
@@ -104,21 +105,31 @@ const createTransfer = `-- name: CreateTransfer :one
 INSERT INTO transfers (
   from_account_id,
   to_account_id,
+  from_entry_id,
+  to_entry_id,
   amount
 ) VALUES (
-  $1, $2, $3
-) RETURNING id, from_account_id, to_account_id, amount, created_at
+  $1, $2, $3, $4, $5
+) RETURNING id, from_account_id, to_account_id, amount, created_at, from_entry_id, to_entry_id
 `
 
 type CreateTransferParams struct {
 	FromAccountID uuid.UUID `json:"from_account_id"`
 	ToAccountID   uuid.UUID `json:"to_account_id"`
+	FromEntryID   int64     `json:"from_entry_id"`
+	ToEntryID     int64     `json:"to_entry_id"`
 	Amount        int64     `json:"amount"`
 }
 
 // Transfer
 func (q *Queries) CreateTransfer(ctx context.Context, arg CreateTransferParams) (Transfer, error) {
-	row := q.db.QueryRowContext(ctx, createTransfer, arg.FromAccountID, arg.ToAccountID, arg.Amount)
+	row := q.db.QueryRowContext(ctx, createTransfer,
+		arg.FromAccountID,
+		arg.ToAccountID,
+		arg.FromEntryID,
+		arg.ToEntryID,
+		arg.Amount,
+	)
 	var i Transfer
 	err := row.Scan(
 		&i.ID,
@@ -126,6 +137,8 @@ func (q *Queries) CreateTransfer(ctx context.Context, arg CreateTransferParams) 
 		&i.ToAccountID,
 		&i.Amount,
 		&i.CreatedAt,
+		&i.FromEntryID,
+		&i.ToEntryID,
 	)
 	return i, err
 }
@@ -196,7 +209,7 @@ func (q *Queries) GetEntry(ctx context.Context, id int64) (Entry, error) {
 }
 
 const getTransfer = `-- name: GetTransfer :one
-SELECT id, from_account_id, to_account_id, amount, created_at FROM transfers
+SELECT id, from_account_id, to_account_id, amount, created_at, from_entry_id, to_entry_id FROM transfers
 WHERE id = $1
 `
 
@@ -209,6 +222,8 @@ func (q *Queries) GetTransfer(ctx context.Context, id int64) (Transfer, error) {
 		&i.ToAccountID,
 		&i.Amount,
 		&i.CreatedAt,
+		&i.FromEntryID,
+		&i.ToEntryID,
 	)
 	return i, err
 }
@@ -302,9 +317,74 @@ func (q *Queries) ListEntriesByAccount(ctx context.Context, arg ListEntriesByAcc
 	return items, nil
 }
 
+const listTransfersByAccounts = `-- name: ListTransfersByAccounts :many
+SELECT T.id, T.from_account_id, T.to_account_id, T.amount,
+T.from_entry_id, T.to_entry_id, T.created_at FROM transfers AS T
+JOIN (
+    SELECT id FROM transfers as jt
+    WHERE jt.to_account_id = $1 AND jt.from_account_id = $2
+    LIMIT $3
+    OFFSET $4
+  ) as P
+  ON P.id = T.id
+`
+
+type ListTransfersByAccountsParams struct {
+	ToAccountID   uuid.UUID `json:"to_account_id"`
+	FromAccountID uuid.UUID `json:"from_account_id"`
+	Limit         int32     `json:"limit"`
+	Offset        int32     `json:"offset"`
+}
+
+type ListTransfersByAccountsRow struct {
+	ID            int64     `json:"id"`
+	FromAccountID uuid.UUID `json:"from_account_id"`
+	ToAccountID   uuid.UUID `json:"to_account_id"`
+	Amount        int64     `json:"amount"`
+	FromEntryID   int64     `json:"from_entry_id"`
+	ToEntryID     int64     `json:"to_entry_id"`
+	CreatedAt     time.Time `json:"created_at"`
+}
+
+func (q *Queries) ListTransfersByAccounts(ctx context.Context, arg ListTransfersByAccountsParams) ([]ListTransfersByAccountsRow, error) {
+	rows, err := q.db.QueryContext(ctx, listTransfersByAccounts,
+		arg.ToAccountID,
+		arg.FromAccountID,
+		arg.Limit,
+		arg.Offset,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListTransfersByAccountsRow
+	for rows.Next() {
+		var i ListTransfersByAccountsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.FromAccountID,
+			&i.ToAccountID,
+			&i.Amount,
+			&i.FromEntryID,
+			&i.ToEntryID,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listTransfersByFromAccount = `-- name: ListTransfersByFromAccount :many
-SELECT T.id, T.from_account_id, T.to_account_id,
-T.amount, T.created_at FROM transfers AS T
+SELECT T.id, T.from_account_id, T.to_account_id, T.amount,
+T.from_entry_id, T.to_entry_id, T.created_at FROM transfers AS T
 JOIN (
     SELECT id FROM transfers as jt
     WHERE jt.from_account_id = $1
@@ -320,20 +400,32 @@ type ListTransfersByFromAccountParams struct {
 	Offset        int32     `json:"offset"`
 }
 
-func (q *Queries) ListTransfersByFromAccount(ctx context.Context, arg ListTransfersByFromAccountParams) ([]Transfer, error) {
+type ListTransfersByFromAccountRow struct {
+	ID            int64     `json:"id"`
+	FromAccountID uuid.UUID `json:"from_account_id"`
+	ToAccountID   uuid.UUID `json:"to_account_id"`
+	Amount        int64     `json:"amount"`
+	FromEntryID   int64     `json:"from_entry_id"`
+	ToEntryID     int64     `json:"to_entry_id"`
+	CreatedAt     time.Time `json:"created_at"`
+}
+
+func (q *Queries) ListTransfersByFromAccount(ctx context.Context, arg ListTransfersByFromAccountParams) ([]ListTransfersByFromAccountRow, error) {
 	rows, err := q.db.QueryContext(ctx, listTransfersByFromAccount, arg.FromAccountID, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Transfer
+	var items []ListTransfersByFromAccountRow
 	for rows.Next() {
-		var i Transfer
+		var i ListTransfersByFromAccountRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.FromAccountID,
 			&i.ToAccountID,
 			&i.Amount,
+			&i.FromEntryID,
+			&i.ToEntryID,
 			&i.CreatedAt,
 		); err != nil {
 			return nil, err
@@ -350,8 +442,8 @@ func (q *Queries) ListTransfersByFromAccount(ctx context.Context, arg ListTransf
 }
 
 const listTransfersByToAccount = `-- name: ListTransfersByToAccount :many
-SELECT T.id, T.from_account_id, T.to_account_id,
-T.amount, T.created_at FROM transfers AS T
+SELECT T.id, T.from_account_id, T.to_account_id, T.amount,
+T.from_entry_id, T.to_entry_id, T.created_at FROM transfers AS T
 JOIN (
     SELECT id FROM transfers as jt
     WHERE jt.to_account_id = $1
@@ -367,20 +459,32 @@ type ListTransfersByToAccountParams struct {
 	Offset      int32     `json:"offset"`
 }
 
-func (q *Queries) ListTransfersByToAccount(ctx context.Context, arg ListTransfersByToAccountParams) ([]Transfer, error) {
+type ListTransfersByToAccountRow struct {
+	ID            int64     `json:"id"`
+	FromAccountID uuid.UUID `json:"from_account_id"`
+	ToAccountID   uuid.UUID `json:"to_account_id"`
+	Amount        int64     `json:"amount"`
+	FromEntryID   int64     `json:"from_entry_id"`
+	ToEntryID     int64     `json:"to_entry_id"`
+	CreatedAt     time.Time `json:"created_at"`
+}
+
+func (q *Queries) ListTransfersByToAccount(ctx context.Context, arg ListTransfersByToAccountParams) ([]ListTransfersByToAccountRow, error) {
 	rows, err := q.db.QueryContext(ctx, listTransfersByToAccount, arg.ToAccountID, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Transfer
+	var items []ListTransfersByToAccountRow
 	for rows.Next() {
-		var i Transfer
+		var i ListTransfersByToAccountRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.FromAccountID,
 			&i.ToAccountID,
 			&i.Amount,
+			&i.FromEntryID,
+			&i.ToEntryID,
 			&i.CreatedAt,
 		); err != nil {
 			return nil, err
@@ -394,6 +498,31 @@ func (q *Queries) ListTransfersByToAccount(ctx context.Context, arg ListTransfer
 		return nil, err
 	}
 	return items, nil
+}
+
+const updateAccountOwner = `-- name: UpdateAccountOwner :one
+UPDATE accounts
+SET owner = $2
+WHERE id = $1
+RETURNING id, owner, balance, currency, created_at
+`
+
+type UpdateAccountOwnerParams struct {
+	ID    uuid.UUID `json:"id"`
+	Owner string    `json:"owner"`
+}
+
+func (q *Queries) UpdateAccountOwner(ctx context.Context, arg UpdateAccountOwnerParams) (Account, error) {
+	row := q.db.QueryRowContext(ctx, updateAccountOwner, arg.ID, arg.Owner)
+	var i Account
+	err := row.Scan(
+		&i.ID,
+		&i.Owner,
+		&i.Balance,
+		&i.Currency,
+		&i.CreatedAt,
+	)
+	return i, err
 }
 
 const updateEntry = `-- name: UpdateEntry :exec

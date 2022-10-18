@@ -13,6 +13,12 @@ INSERT INTO accounts (
 SELECT * FROM accounts
 WHERE id = $1;
 
+-- name: UpdateAccountOwner :one
+UPDATE accounts
+SET owner = $2
+WHERE id = $1
+RETURNING *;
+
 -- name: AddAccountBalance :one
 UPDATE accounts
 SET balance = balance + sqlc.arg(amount)
@@ -71,9 +77,11 @@ WHERE id = $1;
 INSERT INTO transfers (
   from_account_id,
   to_account_id,
+  from_entry_id,
+  to_entry_id,
   amount
 ) VALUES (
-  $1, $2, $3
+  $1, $2, $3, $4, $5
 ) RETURNING *;
 
 -- name: GetTransfer :one
@@ -81,8 +89,8 @@ SELECT * FROM transfers
 WHERE id = $1;
 
 -- name: ListTransfersByFromAccount :many
-SELECT T.id, T.from_account_id, T.to_account_id,
-T.amount, T.created_at FROM transfers AS T
+SELECT T.id, T.from_account_id, T.to_account_id, T.amount,
+T.from_entry_id, T.to_entry_id, T.created_at FROM transfers AS T
 JOIN (
     SELECT id FROM transfers as jt
     WHERE jt.from_account_id = $1
@@ -92,13 +100,24 @@ JOIN (
   ON P.id = T.id;
 
 -- name: ListTransfersByToAccount :many
-SELECT T.id, T.from_account_id, T.to_account_id,
-T.amount, T.created_at FROM transfers AS T
+SELECT T.id, T.from_account_id, T.to_account_id, T.amount,
+T.from_entry_id, T.to_entry_id, T.created_at FROM transfers AS T
 JOIN (
     SELECT id FROM transfers as jt
     WHERE jt.to_account_id = $1
     LIMIT $2
     OFFSET $3
+  ) as P
+  ON P.id = T.id;
+
+-- name: ListTransfersByAccounts :many
+SELECT T.id, T.from_account_id, T.to_account_id, T.amount,
+T.from_entry_id, T.to_entry_id, T.created_at FROM transfers AS T
+JOIN (
+    SELECT id FROM transfers as jt
+    WHERE jt.to_account_id = $1 AND jt.from_account_id = $2
+    LIMIT $3
+    OFFSET $4
   ) as P
   ON P.id = T.id;
 
