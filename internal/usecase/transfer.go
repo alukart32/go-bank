@@ -5,7 +5,6 @@ import (
 	"errors"
 
 	"alukart32.com/bank/entity"
-	"github.com/google/uuid"
 )
 
 type transferService struct {
@@ -26,10 +25,10 @@ func (s *transferService) Get(ctx context.Context, id int64) (*entity.Transfer, 
 	return nil, errors.New("not implemented yet")
 }
 
-func (s *transferService) List(ctx context.Context, accountId uuid.UUID) ([]*entity.Transfer, error) {
+func (s *transferService) List(ctx context.Context, params ListTransferParams) ([]*entity.Transfer, error) {
 	return nil, errors.New("not implemented yet")
 }
 
-func (s *transferService) Rollback(ctx context.Context, id int64, accountId uuid.UUID) error {
+func (s *transferService) Rollback(ctx context.Context, id int64) error {
 	return errors.New("not implemented yet")
 }

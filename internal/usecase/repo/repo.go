@@ -4,14 +4,12 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"sync"
 
 	"alukart32.com/bank/internal/usecase/repo/db"
 )
 
 type SQLRepo struct {
-	db  *sql.DB
-	mux sync.Mutex
+	db *sql.DB
 }
 
 func (r *SQLRepo) execTx(ctx context.Context, opts *sql.TxOptions, fn func(q *db.Queries) error) error {
