@@ -318,10 +318,22 @@ func TestCreateTransfer(t *testing.T) {
 	amount := random.Int64(1, 200000)
 	fromAccount := createRandomAccount(t, qtx)
 	toAccount := createRandomAccount(t, qtx)
+	fromEntry, err := qtx.CreateEntry(context.Background(), CreateEntryParams{
+		AccountID: fromAccount.ID,
+		Amount:    -amount,
+	})
+	require.NoError(t, err)
+	toEntry, err := qtx.CreateEntry(context.Background(), CreateEntryParams{
+		AccountID: toAccount.ID,
+		Amount:    amount,
+	})
+	require.NoError(t, err)
 
 	r, err := qtx.CreateTransfer(context.Background(), CreateTransferParams{
 		FromAccountID: fromAccount.ID,
 		ToAccountID:   toAccount.ID,
+		FromEntryID:   fromEntry.ID,
+		ToEntryID:     toEntry.ID,
 		Amount:        amount,
 	})
 	require.NoError(t, err)
@@ -345,10 +357,22 @@ func TestGetTransfer(t *testing.T) {
 	amount := random.Int64(1, 200000)
 	fromAccount := createRandomAccount(t, qtx)
 	toAccount := createRandomAccount(t, qtx)
+	fromEntry, err := qtx.CreateEntry(context.Background(), CreateEntryParams{
+		AccountID: fromAccount.ID,
+		Amount:    -amount,
+	})
+	require.NoError(t, err)
+	toEntry, err := qtx.CreateEntry(context.Background(), CreateEntryParams{
+		AccountID: toAccount.ID,
+		Amount:    amount,
+	})
+	require.NoError(t, err)
 
 	r, err := qtx.CreateTransfer(context.Background(), CreateTransferParams{
 		FromAccountID: fromAccount.ID,
 		ToAccountID:   toAccount.ID,
+		FromEntryID:   fromEntry.ID,
+		ToEntryID:     toEntry.ID,
 		Amount:        amount,
 	})
 	require.NoError(t, err)
@@ -382,9 +406,22 @@ func TestListTransfersByFromAccount(t *testing.T) {
 
 	transfers := make([]Transfer, 5)
 	for i, v := range toAccounts {
+		fromEntry, err := qtx.CreateEntry(context.Background(), CreateEntryParams{
+			AccountID: fromAccount.ID,
+			Amount:    -amount,
+		})
+		require.NoError(t, err)
+		toEntry, err := qtx.CreateEntry(context.Background(), CreateEntryParams{
+			AccountID: v.ID,
+			Amount:    amount,
+		})
+		require.NoError(t, err)
+
 		transfer, err := qtx.CreateTransfer(context.Background(), CreateTransferParams{
 			FromAccountID: fromAccount.ID,
 			ToAccountID:   v.ID,
+			FromEntryID:   fromEntry.ID,
+			ToEntryID:     toEntry.ID,
 			Amount:        amount,
 		})
 		require.NoError(t, err)
@@ -421,9 +458,22 @@ func TestListTransfersByToAccount(t *testing.T) {
 
 	transfers := make([]Transfer, 5)
 	for i, v := range fromAccounts {
+		fromEntry, err := qtx.CreateEntry(context.Background(), CreateEntryParams{
+			AccountID: v.ID,
+			Amount:    -amount,
+		})
+		require.NoError(t, err)
+		toEntry, err := qtx.CreateEntry(context.Background(), CreateEntryParams{
+			AccountID: toAccount.ID,
+			Amount:    amount,
+		})
+		require.NoError(t, err)
+
 		transfer, err := qtx.CreateTransfer(context.Background(), CreateTransferParams{
 			FromAccountID: v.ID,
 			ToAccountID:   toAccount.ID,
+			FromEntryID:   fromEntry.ID,
+			ToEntryID:     toEntry.ID,
 			Amount:        amount,
 		})
 		require.NoError(t, err)
@@ -453,10 +503,22 @@ func TestDeleteTransfer(t *testing.T) {
 	amount := random.Int64(1, 200000)
 	fromAccount := createRandomAccount(t, qtx)
 	toAccount := createRandomAccount(t, qtx)
+	fromEntry, err := qtx.CreateEntry(context.Background(), CreateEntryParams{
+		AccountID: fromAccount.ID,
+		Amount:    -amount,
+	})
+	require.NoError(t, err)
+	toEntry, err := qtx.CreateEntry(context.Background(), CreateEntryParams{
+		AccountID: toAccount.ID,
+		Amount:    amount,
+	})
+	require.NoError(t, err)
 
 	r, err := qtx.CreateTransfer(context.Background(), CreateTransferParams{
 		FromAccountID: fromAccount.ID,
 		ToAccountID:   toAccount.ID,
+		FromEntryID:   fromEntry.ID,
+		ToEntryID:     toEntry.ID,
 		Amount:        amount,
 	})
 	require.NoError(t, err)
