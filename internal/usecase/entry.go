@@ -30,7 +30,7 @@ func (s *entryService) Update(ctx context.Context, e *entity.Entry) (*entity.Ent
 	return nil, errors.New("not implemented yet")
 }
 
-func (s *entryService) List(ctx context.Context, accountId uuid.UUID) ([]*entity.Entry, error) {
+func (s *entryService) List(ctx context.Context, accountId uuid.UUID) (*[]entity.Entry, error) {
 	return nil, errors.New("not implemented yet")
 }
 

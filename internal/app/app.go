@@ -1,7 +1,7 @@
 package app
 
 import (
-	"errors"
+	"fmt"
 	"log"
 	"os"
 	"os/signal"
@@ -24,7 +24,7 @@ func Run(cfg config.Config) {
 	// Prepare tools
 	db, err := postgres.New(&cfg.DB)
 	if err != nil {
-		fail(errors.New("app - init db instance error: " + err.Error()))
+		fail(fmt.Errorf("app - init db instance error: " + err.Error()))
 	}
 
 	accountService := usecase.NewAccountService(repo.NewAccountSQLRepo(db))
@@ -43,11 +43,11 @@ func Run(cfg config.Config) {
 	case s := <-interrupt:
 		log.Println(s.String())
 	case err = <-httpServer.Notify():
-		log.Printf("app - Run - httpServer.Notify: %v", err)
+		log.Print(fmt.Errorf("app - Run - httpServer.Notify: %v", err))
 	}
 
 	// Shutdown
 	if err = httpServer.Shutdown(); err != nil {
-		log.Printf("app - Run - httpServer.Shutdown: %v", err)
+		log.Print(fmt.Errorf("app - Run - httpServer.Shutdown: %v", err))
 	}
 }

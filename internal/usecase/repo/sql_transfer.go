@@ -127,8 +127,8 @@ func (r *TransferSQLRepo) Get(ctx context.Context, id int64) (*entity.Transfer, 
 	return &result, err
 }
 
-func (r *TransferSQLRepo) List(ctx context.Context, params usecase.ListTransferParams) ([]*entity.Transfer, error) {
-	var result []*entity.Transfer
+func (r *TransferSQLRepo) List(ctx context.Context, params usecase.ListTransferParams) (*[]entity.Transfer, error) {
+	var result []entity.Transfer
 
 	err := r.execTx(ctx, nil, func(q *db.Queries) error {
 		var err error
@@ -146,7 +146,7 @@ func (r *TransferSQLRepo) List(ctx context.Context, params usecase.ListTransferP
 
 			for _, v := range transfers {
 				tmp := entity.Transfer(v)
-				result = append(result, &tmp)
+				result = append(result, tmp)
 			}
 		case usecase.ListToAccount:
 			var transfers []db.ListTransfersByToAccountRow
@@ -161,7 +161,7 @@ func (r *TransferSQLRepo) List(ctx context.Context, params usecase.ListTransferP
 
 			for _, v := range transfers {
 				tmp := entity.Transfer(v)
-				result = append(result, &tmp)
+				result = append(result, tmp)
 			}
 		case usecase.ListByAccounts:
 			var transfers []db.ListTransfersByAccountsRow
@@ -177,7 +177,7 @@ func (r *TransferSQLRepo) List(ctx context.Context, params usecase.ListTransferP
 
 			for _, v := range transfers {
 				tmp := entity.Transfer(v)
-				result = append(result, &tmp)
+				result = append(result, tmp)
 			}
 		default:
 			return errors.New("unsupported list transfer mode")
@@ -185,7 +185,7 @@ func (r *TransferSQLRepo) List(ctx context.Context, params usecase.ListTransferP
 		return nil
 	})
 
-	return result, err
+	return &result, err
 }
 
 func (r *TransferSQLRepo) Rollback(ctx context.Context, id int64) error {
