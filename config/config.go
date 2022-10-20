@@ -50,9 +50,9 @@ var (
 func New(profile string) (*Config, error) {
 	cfg := &Config{}
 
-	cfgPath := getRootDir() + "/config" + profiles["default"]
-	if f, exist := profiles[profile]; exist {
-		cfgPath = getRootDir() + "/config/" + f
+	cfgPath := fmt.Sprint(getRootDir(), "/config", profiles["default"])
+	if v, ok := profiles[profile]; ok {
+		cfgPath = fmt.Sprint(getRootDir(), "/config/", v)
 	}
 
 	err := cleanenv.ReadConfig(cfgPath, cfg)
