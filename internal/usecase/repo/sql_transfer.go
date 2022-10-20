@@ -127,7 +127,7 @@ func (r *TransferSQLRepo) Get(ctx context.Context, id int64) (*entity.Transfer, 
 	return &result, err
 }
 
-func (r *TransferSQLRepo) List(ctx context.Context, params usecase.ListTransferParams) (*[]entity.Transfer, error) {
+func (r *TransferSQLRepo) List(ctx context.Context, params usecase.ListTransferParams) ([]entity.Transfer, error) {
 	var result []entity.Transfer
 
 	err := r.execTx(ctx, nil, func(q *db.Queries) error {
@@ -185,7 +185,7 @@ func (r *TransferSQLRepo) List(ctx context.Context, params usecase.ListTransferP
 		return nil
 	})
 
-	return &result, err
+	return result, err
 }
 
 func (r *TransferSQLRepo) Rollback(ctx context.Context, id int64) error {

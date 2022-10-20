@@ -14,22 +14,22 @@ type (
 		UpdateOwner(ctx context.Context, id uuid.UUID, owner string) (*entity.Account, error)
 		AddBalance(ctx context.Context, id uuid.UUID, amount int64) (*entity.Account, error)
 		Delete(ctx context.Context, id uuid.UUID) error
-		ListEntries(ctx context.Context, id uuid.UUID) (*[]entity.Entry, error)
-		ListTransfers(ctx context.Context, id uuid.UUID) (*[]entity.Transfer, error)
+		ListEntries(ctx context.Context, id uuid.UUID) ([]entity.Entry, error)
+		ListTransfers(ctx context.Context, id uuid.UUID) ([]entity.Transfer, error)
 	}
 
 	EntryService interface {
 		Create(ctx context.Context, e *entity.Entry) (*entity.Entry, error)
 		Get(ctx context.Context, id int64) (*entity.Entry, error)
 		Update(ctx context.Context, e *entity.Entry) (*entity.Entry, error)
-		List(ctx context.Context, accountId uuid.UUID) (*[]entity.Entry, error)
+		List(ctx context.Context, accountId uuid.UUID) ([]entity.Entry, error)
 		Delete(ctx context.Context, id int64) error
 	}
 
 	TransferService interface {
 		Transfer(ctx context.Context, t entity.Transfer) (*entity.TransferRes, error)
 		Get(ctx context.Context, id int64) (*entity.Transfer, error)
-		List(ctx context.Context, params ListTransferParams) (*[]entity.Transfer, error)
+		List(ctx context.Context, params ListTransferParams) ([]entity.Transfer, error)
 		Rollback(ctx context.Context, id int64) error
 	}
 
@@ -44,14 +44,14 @@ type (
 		Create(ctx context.Context, e *entity.Entry) (*entity.Entry, error)
 		Get(ctx context.Context, id int64) (*entity.Entry, error)
 		Update(ctx context.Context, e *entity.Entry) error
-		List(ctx context.Context, accountId uuid.UUID) (*[]entity.Entry, error)
+		List(ctx context.Context, accountId uuid.UUID) ([]entity.Entry, error)
 		Delete(ctx context.Context, id int64) error
 	}
 
 	TransferRepo interface {
 		Create(ctx context.Context, transfer *entity.Transfer) (*entity.TransferRes, error)
 		Get(ctx context.Context, id int64) (*entity.Transfer, error)
-		List(ctx context.Context, params ListTransferParams) (*[]entity.Transfer, error)
+		List(ctx context.Context, params ListTransferParams) ([]entity.Transfer, error)
 		Rollback(ctx context.Context, id int64) error
 	}
 

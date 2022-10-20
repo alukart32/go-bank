@@ -38,10 +38,10 @@ func (s *accountService) Delete(ctx context.Context, id uuid.UUID) error {
 	return errors.New("not implemented yet")
 }
 
-func (s *accountService) ListEntries(ctx context.Context, id uuid.UUID) (*[]entity.Entry, error) {
+func (s *accountService) ListEntries(ctx context.Context, id uuid.UUID) ([]entity.Entry, error) {
 	return nil, errors.New("not implemented yet")
 }
 
-func (s *accountService) ListTransfers(ctx context.Context, id uuid.UUID) (*[]entity.Transfer, error) {
+func (s *accountService) ListTransfers(ctx context.Context, id uuid.UUID) ([]entity.Transfer, error) {
 	return nil, errors.New("not implemented yet")
 }

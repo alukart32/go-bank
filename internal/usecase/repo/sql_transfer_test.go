@@ -300,7 +300,7 @@ func TestTransferListByFromAccount(t *testing.T) {
 	})
 
 	require.NoError(t, err)
-	for _, v := range *transfers {
+	for _, v := range transfers {
 		if v.FromAccountID != fromAccount.ID {
 			t.Errorf("get transfer not for account: %v, got %v", fromAccount.ID, v.FromAccountID)
 		}
@@ -360,7 +360,7 @@ func TestTransferListByToAccount(t *testing.T) {
 	})
 
 	require.NoError(t, err)
-	for _, v := range *transfers {
+	for _, v := range transfers {
 		if v.ToAccountID != toAccount.ID {
 			t.Errorf("get transfer not for account: %v, got %v", toAccount.ID, v.ToAccountID)
 		}
@@ -421,7 +421,7 @@ func TestTransferListByAccounts(t *testing.T) {
 	})
 
 	require.NoError(t, err)
-	for _, v := range *transfers {
+	for _, v := range transfers {
 		if v.ToAccountID != toAccount.ID || v.FromAccountID != fromAccount.ID {
 			t.Errorf("get transfer not for fromAccount: %v and toAccount: %v, got %v, %v",
 				fromAccount.ID, toAccount.ID, v.FromAccountID, v.ToAccountID)

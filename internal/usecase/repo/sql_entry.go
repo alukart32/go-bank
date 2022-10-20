@@ -65,7 +65,7 @@ func (r *EntrySQLRepo) Update(ctx context.Context, e *entity.Entry) error {
 	})
 }
 
-func (r *EntrySQLRepo) List(ctx context.Context, accountId uuid.UUID) (*[]entity.Entry, error) {
+func (r *EntrySQLRepo) List(ctx context.Context, accountId uuid.UUID) ([]entity.Entry, error) {
 	var result []entity.Entry
 
 	err := r.execTx(ctx, nil, func(q *db.Queries) error {
@@ -83,7 +83,7 @@ func (r *EntrySQLRepo) List(ctx context.Context, accountId uuid.UUID) (*[]entity
 		return nil
 	})
 
-	return &result, err
+	return result, err
 }
 
 func (r *EntrySQLRepo) Delete(ctx context.Context, id int64) error {

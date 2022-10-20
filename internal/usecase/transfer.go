@@ -25,7 +25,7 @@ func (s *transferService) Get(ctx context.Context, id int64) (*entity.Transfer, 
 	return nil, errors.New("not implemented yet")
 }
 
-func (s *transferService) List(ctx context.Context, params ListTransferParams) (*[]entity.Transfer, error) {
+func (s *transferService) List(ctx context.Context, params ListTransferParams) ([]entity.Transfer, error) {
 	return nil, errors.New("not implemented yet")
 }
 

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 
 	"alukart32.com/bank/config"
@@ -11,7 +12,7 @@ import (
 func main() {
 	cfg, err := config.New(config.Default)
 	if err != nil {
-		log.Fatal("read config error: ", err)
+		log.Fatal(fmt.Errorf("read config error: %w", err))
 	}
 
 	app.Run(*cfg)
