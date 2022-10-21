@@ -21,7 +21,7 @@ func NewEntrySQLRepo(db *sql.DB) *EntrySQLRepo {
 	}
 }
 
-func (r *EntrySQLRepo) Create(ctx context.Context, e *entity.Entry) (*entity.Entry, error) {
+func (r *EntrySQLRepo) Create(ctx context.Context, e entity.Entry) (entity.Entry, error) {
 	var result entity.Entry
 
 	err := r.execTx(ctx, nil, func(q *db.Queries) error {
@@ -37,10 +37,10 @@ func (r *EntrySQLRepo) Create(ctx context.Context, e *entity.Entry) (*entity.Ent
 		return nil
 	})
 
-	return &result, err
+	return result, err
 }
 
-func (r *EntrySQLRepo) Get(ctx context.Context, id int64) (*entity.Entry, error) {
+func (r *EntrySQLRepo) Get(ctx context.Context, id int64) (entity.Entry, error) {
 	var result entity.Entry
 
 	err := r.execTx(ctx, nil, func(q *db.Queries) error {
@@ -53,10 +53,10 @@ func (r *EntrySQLRepo) Get(ctx context.Context, id int64) (*entity.Entry, error)
 		return nil
 	})
 
-	return &result, err
+	return result, err
 }
 
-func (r *EntrySQLRepo) Update(ctx context.Context, e *entity.Entry) error {
+func (r *EntrySQLRepo) Update(ctx context.Context, e entity.Entry) error {
 	return r.execTx(ctx, nil, func(q *db.Queries) error {
 		return q.UpdateEntry(ctx, db.UpdateEntryParams{
 			ID:     e.ID,

@@ -17,12 +17,12 @@ func NewTransferService(r TransferRepo) TransferService {
 	}
 }
 
-func (s *transferService) Transfer(ctx context.Context, t entity.Transfer) (*entity.TransferRes, error) {
-	return nil, errors.New("not implemented yet")
+func (s *transferService) Transfer(ctx context.Context, t entity.Transfer) (entity.TransferRes, error) {
+	return entity.TransferRes{}, errors.New("not implemented yet")
 }
 
-func (s *transferService) Get(ctx context.Context, id int64) (*entity.Transfer, error) {
-	return nil, errors.New("not implemented yet")
+func (s *transferService) Get(ctx context.Context, id int64) (entity.Transfer, error) {
+	return entity.Transfer{}, errors.New("not implemented yet")
 }
 
 func (s *transferService) List(ctx context.Context, params ListTransferParams) ([]entity.Transfer, error) {

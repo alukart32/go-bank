@@ -2,7 +2,6 @@ package random
 
 import (
 	"math/rand"
-	"strings"
 	"time"
 )
 
@@ -16,16 +15,15 @@ func Int64(min, max int64) int64 {
 
 const alphabet = "abcdefghijklmnopqrstuvwxyz"
 
-func String(n int) string {
-	var sb strings.Builder
+func String(n int) []byte {
+	array := make([]byte, n)
 	k := len(alphabet)
 
 	for i := 0; i < n; i++ {
-		c := alphabet[rand.Intn(k)]
-		sb.WriteByte(c)
+		array[i] = alphabet[rand.Intn(k)]
 	}
 
-	return sb.String()
+	return array
 }
 
 func GetString(strings ...string) string {

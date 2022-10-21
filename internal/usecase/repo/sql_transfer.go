@@ -24,7 +24,7 @@ func NewTransferSQLRepo(db *sql.DB) *TransferSQLRepo {
 	}
 }
 
-func (r *TransferSQLRepo) Create(ctx context.Context, transfer *entity.Transfer) (*entity.TransferRes, error) {
+func (r *TransferSQLRepo) Create(ctx context.Context, transfer entity.Transfer) (entity.TransferRes, error) {
 	var result entity.TransferRes
 
 	err := r.execTx(ctx, &sql.TxOptions{}, func(q *db.Queries) error {
@@ -101,10 +101,10 @@ func (r *TransferSQLRepo) Create(ctx context.Context, transfer *entity.Transfer)
 		r.mux.Unlock()
 		return nil
 	})
-	return &result, err
+	return result, err
 }
 
-func (r *TransferSQLRepo) Get(ctx context.Context, id int64) (*entity.Transfer, error) {
+func (r *TransferSQLRepo) Get(ctx context.Context, id int64) (entity.Transfer, error) {
 	var result entity.Transfer
 
 	err := r.execTx(ctx, nil, func(q *db.Queries) error {
@@ -124,7 +124,7 @@ func (r *TransferSQLRepo) Get(ctx context.Context, id int64) (*entity.Transfer, 
 		}
 		return nil
 	})
-	return &result, err
+	return result, err
 }
 
 func (r *TransferSQLRepo) List(ctx context.Context, params usecase.ListTransferParams) ([]entity.Transfer, error) {

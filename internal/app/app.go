@@ -22,7 +22,7 @@ func Run(cfg config.Config) {
 	}
 
 	// Prepare tools
-	db, err := postgres.New(&cfg.DB)
+	db, err := postgres.New(cfg.DB)
 	if err != nil {
 		fail(fmt.Errorf("app - init db instance error: " + err.Error()))
 	}
@@ -31,9 +31,8 @@ func Run(cfg config.Config) {
 	entryService := usecase.NewEntryService(repo.NewEntrySQLRepo(db))
 	transferService := usecase.NewTransferService(repo.NewTransferSQLRepo(db))
 
-	gin := gin.New()
-	v1.NewRouter(gin, accountService, entryService, transferService)
-	httpServer := httpserver.New(gin, cfg.Http)
+	handler := v1.NewRouter(gin.New(), accountService, entryService, transferService)
+	httpServer := httpserver.New(handler, cfg.Http)
 
 	// Waiting signal
 	interrupt := make(chan os.Signal, 1)
@@ -49,5 +48,9 @@ func Run(cfg config.Config) {
 	// Shutdown
 	if err = httpServer.Shutdown(); err != nil {
 		log.Print(fmt.Errorf("app - Run - httpServer.Shutdown: %v", err))
+	}
+
+	if err = postgres.Close(); err != nil {
+		log.Print(fmt.Errorf("app - Run - postgres.Close: %v", err))
 	}
 }

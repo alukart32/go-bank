@@ -47,30 +47,30 @@ var (
 	}
 )
 
-func New(profile string) (*Config, error) {
-	cfg := &Config{}
+func New(profile string) (Config, error) {
+	var cfg Config
 
 	cfgPath := fmt.Sprint(getRootDir(), "/config", profiles["default"])
 	if v, ok := profiles[profile]; ok {
 		cfgPath = fmt.Sprint(getRootDir(), "/config/", v)
 	}
 
-	err := cleanenv.ReadConfig(cfgPath, cfg)
+	err := cleanenv.ReadConfig(cfgPath, &cfg)
 	if err != nil {
-		return nil, fmt.Errorf("config error: %w", err)
+		return cfg, fmt.Errorf("config error: %w", err)
 	}
 
-	err = cleanenv.ReadEnv(cfg)
+	err = cleanenv.ReadEnv(&cfg)
 	if err != nil {
-		return nil, err
+		return cfg, err
 	}
 
 	return cfg, nil
 }
 
 // Print outputs the configuration in YAML format.
-func Print(c *Config) {
-	if data, err := yaml.Marshal(*c); err != nil {
+func Print(c Config) {
+	if data, err := yaml.Marshal(&c); err != nil {
 		log.Println("can not print config")
 	} else {
 		log.Printf("config data\n%s%v", "---\n", string(data))
@@ -78,9 +78,8 @@ func Print(c *Config) {
 }
 
 // getRootDir get project root dir.
-func getRootDir() string {
+func getRootDir() []byte {
 	re := regexp.MustCompile(`^(.*` + projectDirName + `)`)
 	cwd, _ := os.Getwd()
-	rootPath := re.Find([]byte(cwd))
-	return string(rootPath)
+	return re.Find([]byte(cwd))
 }

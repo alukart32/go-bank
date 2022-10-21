@@ -15,5 +15,5 @@ func main() {
 		log.Fatal(fmt.Errorf("read config error: %w", err))
 	}
 
-	app.Run(*cfg)
+	app.Run(cfg)
 }

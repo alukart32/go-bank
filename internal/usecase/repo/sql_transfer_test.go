@@ -19,7 +19,7 @@ import (
 
 var (
 	testDB   *sql.DB
-	testConf *config.Config
+	testConf config.Config
 )
 
 func TestMain(m *testing.M) {
@@ -29,7 +29,7 @@ func TestMain(m *testing.M) {
 		log.Fatal("cannot get config: ", err)
 	}
 
-	testDB, err = postgres.New(&testConf.DB)
+	testDB, err = postgres.New(testConf.DB)
 	if err != nil {
 		log.Fatal("cannot connect to db: ", err)
 	}
@@ -39,7 +39,7 @@ func TestTransfer(t *testing.T) {
 	repoTransfer := NewTransferSQLRepo(testDB)
 	repoAccount := NewAccountSQLRepo(testDB)
 
-	fromAccount, err := repoAccount.Create(context.Background(), &entity.Account{
+	fromAccount, err := repoAccount.Create(context.Background(), entity.Account{
 		ID:       uuid.New(),
 		Owner:    "owner_test_1",
 		Balance:  random.Int64(10_000, 100_000_000),
@@ -49,7 +49,7 @@ func TestTransfer(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	toAccount, err := repoAccount.Create(context.Background(), &entity.Account{
+	toAccount, err := repoAccount.Create(context.Background(), entity.Account{
 		ID:       uuid.New(),
 		Owner:    "owner_test_2",
 		Balance:  random.Int64(10_000, 10_000_000),
@@ -62,11 +62,11 @@ func TestTransfer(t *testing.T) {
 	n := 5
 	amount := random.Int64(1, 2000)
 	errors := make(chan error)
-	results := make(chan *entity.TransferRes)
+	results := make(chan entity.TransferRes)
 
 	for i := 0; i < n; i++ {
 		go func() {
-			t, err := repoTransfer.Create(context.Background(), &entity.Transfer{
+			t, err := repoTransfer.Create(context.Background(), entity.Transfer{
 				FromAccountID: fromAccount.ID,
 				ToAccountID:   toAccount.ID,
 				Amount:        amount,
@@ -150,7 +150,7 @@ func TestTransferDeadlock(t *testing.T) {
 	repoTransfer := NewTransferSQLRepo(testDB)
 	repoAccount := NewAccountSQLRepo(testDB)
 
-	fromAccount, err := repoAccount.Create(context.Background(), &entity.Account{
+	fromAccount, err := repoAccount.Create(context.Background(), entity.Account{
 		ID:       uuid.New(),
 		Owner:    "owner_test_1",
 		Balance:  random.Int64(10_000, 100_000_000),
@@ -160,7 +160,7 @@ func TestTransferDeadlock(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	toAccount, err := repoAccount.Create(context.Background(), &entity.Account{
+	toAccount, err := repoAccount.Create(context.Background(), entity.Account{
 		ID:       uuid.New(),
 		Owner:    "owner_test_2",
 		Balance:  random.Int64(10_000, 10_000_000),
@@ -182,7 +182,7 @@ func TestTransferDeadlock(t *testing.T) {
 		}
 
 		go func() {
-			_, err := repoTransfer.Create(context.Background(), &entity.Transfer{
+			_, err := repoTransfer.Create(context.Background(), entity.Transfer{
 				FromAccountID: fromAccountID,
 				ToAccountID:   toAccountID,
 				Amount:        amount,
@@ -212,7 +212,7 @@ func TestTransferGet(t *testing.T) {
 	repoTransfer := NewTransferSQLRepo(testDB)
 	repoAccount := NewAccountSQLRepo(testDB)
 
-	fromAccount, err := repoAccount.Create(context.Background(), &entity.Account{
+	fromAccount, err := repoAccount.Create(context.Background(), entity.Account{
 		ID:       uuid.New(),
 		Owner:    "owner_test_1",
 		Balance:  random.Int64(10_000, 100_000_000),
@@ -222,7 +222,7 @@ func TestTransferGet(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	toAccount, err := repoAccount.Create(context.Background(), &entity.Account{
+	toAccount, err := repoAccount.Create(context.Background(), entity.Account{
 		ID:       uuid.New(),
 		Owner:    "owner_test_2",
 		Balance:  random.Int64(10_000, 10_000_000),
@@ -233,7 +233,7 @@ func TestTransferGet(t *testing.T) {
 	}
 
 	amount := random.Int64(1, 100)
-	createdTransfer, err := repoTransfer.Create(context.Background(), &entity.Transfer{
+	createdTransfer, err := repoTransfer.Create(context.Background(), entity.Transfer{
 		FromAccountID: fromAccount.ID,
 		ToAccountID:   toAccount.ID,
 		Amount:        amount,
@@ -251,7 +251,7 @@ func TestTransferListByFromAccount(t *testing.T) {
 	repoTransfer := NewTransferSQLRepo(testDB)
 	repoAccount := NewAccountSQLRepo(testDB)
 
-	fromAccount, err := repoAccount.Create(context.Background(), &entity.Account{
+	fromAccount, err := repoAccount.Create(context.Background(), entity.Account{
 		ID:       uuid.New(),
 		Owner:    "owner_test_1",
 		Balance:  random.Int64(10_000, 100_000_000),
@@ -261,7 +261,7 @@ func TestTransferListByFromAccount(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	toAccount, err := repoAccount.Create(context.Background(), &entity.Account{
+	toAccount, err := repoAccount.Create(context.Background(), entity.Account{
 		ID:       uuid.New(),
 		Owner:    "owner_test_2",
 		Balance:  random.Int64(10_000, 10_000_000),
@@ -276,7 +276,7 @@ func TestTransferListByFromAccount(t *testing.T) {
 
 	for i := 0; i < n; i++ {
 		go func() {
-			_, err := repoTransfer.Create(context.Background(), &entity.Transfer{
+			_, err := repoTransfer.Create(context.Background(), entity.Transfer{
 				FromAccountID: fromAccount.ID,
 				ToAccountID:   toAccount.ID,
 				Amount:        random.Int64(1, 2000),
@@ -311,7 +311,7 @@ func TestTransferListByToAccount(t *testing.T) {
 	repoTransfer := NewTransferSQLRepo(testDB)
 	repoAccount := NewAccountSQLRepo(testDB)
 
-	fromAccount, err := repoAccount.Create(context.Background(), &entity.Account{
+	fromAccount, err := repoAccount.Create(context.Background(), entity.Account{
 		ID:       uuid.New(),
 		Owner:    "owner_test_1",
 		Balance:  random.Int64(10_000, 100_000_000),
@@ -321,7 +321,7 @@ func TestTransferListByToAccount(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	toAccount, err := repoAccount.Create(context.Background(), &entity.Account{
+	toAccount, err := repoAccount.Create(context.Background(), entity.Account{
 		ID:       uuid.New(),
 		Owner:    "owner_test_2",
 		Balance:  random.Int64(10_000, 10_000_000),
@@ -336,7 +336,7 @@ func TestTransferListByToAccount(t *testing.T) {
 
 	for i := 0; i < n; i++ {
 		go func() {
-			_, err := repoTransfer.Create(context.Background(), &entity.Transfer{
+			_, err := repoTransfer.Create(context.Background(), entity.Transfer{
 				FromAccountID: fromAccount.ID,
 				ToAccountID:   toAccount.ID,
 				Amount:        random.Int64(1, 2000),
@@ -371,7 +371,7 @@ func TestTransferListByAccounts(t *testing.T) {
 	repoTransfer := NewTransferSQLRepo(testDB)
 	repoAccount := NewAccountSQLRepo(testDB)
 
-	fromAccount, err := repoAccount.Create(context.Background(), &entity.Account{
+	fromAccount, err := repoAccount.Create(context.Background(), entity.Account{
 		ID:       uuid.New(),
 		Owner:    "owner_test_1",
 		Balance:  random.Int64(10_000, 100_000_000),
@@ -381,7 +381,7 @@ func TestTransferListByAccounts(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	toAccount, err := repoAccount.Create(context.Background(), &entity.Account{
+	toAccount, err := repoAccount.Create(context.Background(), entity.Account{
 		ID:       uuid.New(),
 		Owner:    "owner_test_2",
 		Balance:  random.Int64(10_000, 10_000_000),
@@ -396,7 +396,7 @@ func TestTransferListByAccounts(t *testing.T) {
 
 	for i := 0; i < n; i++ {
 		go func() {
-			_, err := repoTransfer.Create(context.Background(), &entity.Transfer{
+			_, err := repoTransfer.Create(context.Background(), entity.Transfer{
 				FromAccountID: fromAccount.ID,
 				ToAccountID:   toAccount.ID,
 				Amount:        random.Int64(1, 2000),
@@ -433,7 +433,7 @@ func TestTransferRollback(t *testing.T) {
 	repoTransfer := NewTransferSQLRepo(testDB)
 	repoAccount := NewAccountSQLRepo(testDB)
 
-	fromAccount, err := repoAccount.Create(context.Background(), &entity.Account{
+	fromAccount, err := repoAccount.Create(context.Background(), entity.Account{
 		ID:       uuid.New(),
 		Owner:    "owner_test_1",
 		Balance:  random.Int64(10_000, 100_000_000),
@@ -443,7 +443,7 @@ func TestTransferRollback(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	toAccount, err := repoAccount.Create(context.Background(), &entity.Account{
+	toAccount, err := repoAccount.Create(context.Background(), entity.Account{
 		ID:       uuid.New(),
 		Owner:    "owner_test_2",
 		Balance:  random.Int64(10_000, 10_000_000),
@@ -456,11 +456,11 @@ func TestTransferRollback(t *testing.T) {
 	n := 5
 	amount := random.Int64(1, 2000)
 	errors := make(chan error)
-	results := make(chan *entity.TransferRes, n)
+	results := make(chan entity.TransferRes, n)
 
 	for i := 0; i < n; i++ {
 		go func() {
-			t, err := repoTransfer.Create(context.Background(), &entity.Transfer{
+			t, err := repoTransfer.Create(context.Background(), entity.Transfer{
 				FromAccountID: fromAccount.ID,
 				ToAccountID:   toAccount.ID,
 				Amount:        amount,

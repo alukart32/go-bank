@@ -18,20 +18,20 @@ func NewAccountService(r AccountRepo) AccountService {
 	}
 }
 
-func (s *accountService) Create(ctx context.Context, a *entity.Account) error {
+func (s *accountService) Create(ctx context.Context, a entity.Account) error {
 	return errors.New("not implemented yet")
 }
 
-func (s *accountService) Get(ctx context.Context, id uuid.UUID) (*entity.Account, error) {
-	return nil, errors.New("not implemented yet")
+func (s *accountService) Get(ctx context.Context, id uuid.UUID) (entity.Account, error) {
+	return entity.Account{}, errors.New("not implemented yet")
 }
 
-func (s *accountService) UpdateOwner(ctx context.Context, id uuid.UUID, owner string) (*entity.Account, error) {
-	return nil, errors.New("not implemented yet")
+func (s *accountService) UpdateOwner(ctx context.Context, id uuid.UUID, owner string) (entity.Account, error) {
+	return entity.Account{}, errors.New("not implemented yet")
 }
 
-func (s *accountService) AddBalance(ctx context.Context, id uuid.UUID, amount int64) (*entity.Account, error) {
-	return nil, errors.New("not implemented yet")
+func (s *accountService) AddBalance(ctx context.Context, id uuid.UUID, amount int64) (entity.Account, error) {
+	return entity.Account{}, errors.New("not implemented yet")
 }
 
 func (s *accountService) Delete(ctx context.Context, id uuid.UUID) error {

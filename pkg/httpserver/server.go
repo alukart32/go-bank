@@ -9,26 +9,26 @@ import (
 )
 
 type Server struct {
-	server          *http.Server
+	server          http.Server
 	notify          chan error
 	shutdownTimeout time.Duration
 }
 
 func New(handler http.Handler, cfg config.HTTP) *Server {
-	httpServer := &http.Server{
+	httpServer := http.Server{
 		Handler:      handler,
 		ReadTimeout:  cfg.ReadTimeout,
 		WriteTimeout: cfg.WriteTimeout,
 	}
 
-	s := &Server{
+	s := Server{
 		server:          httpServer,
 		notify:          make(chan error, 1),
 		shutdownTimeout: cfg.ShutdownTimeout,
 	}
 
 	s.start()
-	return s
+	return &s
 }
 
 func (s *Server) start() {

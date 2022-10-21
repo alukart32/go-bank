@@ -18,16 +18,16 @@ func NewEntryService(r EntryRepo) EntryService {
 	}
 }
 
-func (s *entryService) Create(ctx context.Context, e *entity.Entry) (*entity.Entry, error) {
-	return nil, errors.New("not implemented yet")
+func (s *entryService) Create(ctx context.Context, e entity.Entry) (entity.Entry, error) {
+	return entity.Entry{}, errors.New("not implemented yet")
 }
 
-func (s *entryService) Get(ctx context.Context, id int64) (*entity.Entry, error) {
-	return nil, errors.New("not implemented yet")
+func (s *entryService) Get(ctx context.Context, id int64) (entity.Entry, error) {
+	return entity.Entry{}, errors.New("not implemented yet")
 }
 
-func (s *entryService) Update(ctx context.Context, e *entity.Entry) (*entity.Entry, error) {
-	return nil, errors.New("not implemented yet")
+func (s *entryService) Update(ctx context.Context, e entity.Entry) (entity.Entry, error) {
+	return entity.Entry{}, errors.New("not implemented yet")
 }
 
 func (s *entryService) List(ctx context.Context, accountId uuid.UUID) ([]entity.Entry, error) {

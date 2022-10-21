@@ -18,7 +18,7 @@ import (
 
 var (
 	testDB   *sql.DB
-	testConf *config.Config
+	testConf config.Config
 )
 
 func TestMain(m *testing.M) {
@@ -28,7 +28,7 @@ func TestMain(m *testing.M) {
 		log.Fatal("cannot get config: ", err)
 	}
 
-	testDB, err = postgres.New(&testConf.DB)
+	testDB, err = postgres.New(testConf.DB)
 	if err != nil {
 		log.Fatal("cannot connect to db: ", err)
 	}
@@ -535,7 +535,7 @@ func TestDeleteTransfer(t *testing.T) {
 func createRandomAccount(t *testing.T, queries *Queries) Account {
 	arg := CreateAccountParams{
 		ID:       uuid.New(),
-		Owner:    random.String(20),
+		Owner:    string(random.String(20)),
 		Balance:  random.Int64(1, 900000),
 		Currency: Currency(random.GetString([]string{string(CurrencyRUB), string(CurrencyUSD)}...)),
 	}

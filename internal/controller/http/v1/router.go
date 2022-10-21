@@ -10,25 +10,27 @@ import (
 	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
-func NewRouter(handler *gin.Engine, as usecase.AccountService,
-	es usecase.EntryService, ts usecase.TransferService) {
-	handler.Use(gin.Logger())
-	handler.Use(gin.Recovery())
+func NewRouter(engine *gin.Engine, as usecase.AccountService,
+	es usecase.EntryService, ts usecase.TransferService) http.Handler {
+	engine.Use(gin.Logger())
+	engine.Use(gin.Recovery())
 
 	swaggerHandler := ginSwagger.DisablingWrapHandler(swaggerFiles.Handler, "DISABLE_SWAGGER_HTTP_HANDLER")
-	handler.GET("/swagger/*any", swaggerHandler)
+	engine.GET("/swagger/*any", swaggerHandler)
 
 	// K8s probe
-	handler.GET("/healthz", func(c *gin.Context) { c.Status(http.StatusOK) })
+	engine.GET("/healthz", func(c *gin.Context) { c.Status(http.StatusOK) })
 
 	// Prometheus metrics
-	handler.GET("/metrics", gin.WrapH(promhttp.Handler()))
+	engine.GET("/metrics", gin.WrapH(promhttp.Handler()))
 
 	// Routers
-	h := handler.Group("/v1")
+	h := engine.Group("/v1")
 	{
 		newAccountsRoutes(h, as)
 		newEntriesRoutes(h, es)
 		newTransfersRoutes(h, ts)
 	}
+
+	return engine
 }
