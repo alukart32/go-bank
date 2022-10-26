@@ -30,13 +30,13 @@ type (
 		WriteTimeout    time.Duration `env:"HTTP_WRITE_TIMEOUT" env-default:"5000us"`
 		ShutdownTimeout time.Duration `env:"HTTP_SHUTDOWN_TIMEOUT" env-default:"3000us"`
 	}
-	Logger struct {
+	Log struct {
+		Level string `env-required:"true" env:"LOG_LEVEL" env-default:"debug"`
 	}
-
 	Config struct {
 		DB     DB
 		Http   HTTP
-		Logger Logger
+		Logger Log
 	}
 )
 
