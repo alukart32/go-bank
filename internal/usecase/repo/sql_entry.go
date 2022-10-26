@@ -56,7 +56,7 @@ func (r *EntrySQLRepo) Get(ctx context.Context, id int64) (entity.Entry, error) 
 	return result, err
 }
 
-func (r *EntrySQLRepo) Update(ctx context.Context, e entity.Entry) error {
+func (r *EntrySQLRepo) UpdateAmount(ctx context.Context, e entity.Entry) error {
 	return r.execTx(ctx, nil, func(q *db.Queries) error {
 		return q.UpdateEntry(ctx, db.UpdateEntryParams{
 			ID:     e.ID,

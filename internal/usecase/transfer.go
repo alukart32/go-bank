@@ -5,15 +5,18 @@ import (
 	"errors"
 
 	"alukart32.com/bank/entity"
+	"alukart32.com/bank/pkg/zerologx"
 )
 
 type transferService struct {
 	db TransferRepo
+	l  zerologx.Logger
 }
 
-func NewTransferService(r TransferRepo) TransferService {
+func NewTransferService(r TransferRepo, l zerologx.Logger) TransferService {
 	return &transferService{
 		db: r,
+		l:  l,
 	}
 }
 

@@ -132,7 +132,7 @@ func (r *TransferSQLRepo) List(ctx context.Context, params usecase.ListTransferP
 
 	err := r.execTx(ctx, nil, func(q *db.Queries) error {
 		var err error
-		switch params.Mode {
+		switch params.Order {
 		case usecase.ListFromAccount:
 			var transfers []db.ListTransfersByFromAccountRow
 			transfers, err = q.ListTransfersByFromAccount(ctx, db.ListTransfersByFromAccountParams{

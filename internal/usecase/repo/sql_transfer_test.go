@@ -293,7 +293,7 @@ func TestTransferListByFromAccount(t *testing.T) {
 
 	transfers, err := repoTransfer.List(context.Background(), usecase.ListTransferParams{
 		FromAccountId: fromAccount.ID,
-		Mode:          usecase.ListFromAccount,
+		Order:         usecase.ListFromAccount,
 		PaggingParams: usecase.PaggingParams{
 			Limit: int32(n),
 		},
@@ -353,7 +353,7 @@ func TestTransferListByToAccount(t *testing.T) {
 
 	transfers, err := repoTransfer.List(context.Background(), usecase.ListTransferParams{
 		ToAccountId: toAccount.ID,
-		Mode:        usecase.ListToAccount,
+		Order:       usecase.ListToAccount,
 		PaggingParams: usecase.PaggingParams{
 			Limit: int32(n),
 		},
@@ -414,7 +414,7 @@ func TestTransferListByAccounts(t *testing.T) {
 	transfers, err := repoTransfer.List(context.Background(), usecase.ListTransferParams{
 		FromAccountId: fromAccount.ID,
 		ToAccountId:   toAccount.ID,
-		Mode:          usecase.ListByAccounts,
+		Order:         usecase.ListByAccounts,
 		PaggingParams: usecase.PaggingParams{
 			Limit: int32(n),
 		},

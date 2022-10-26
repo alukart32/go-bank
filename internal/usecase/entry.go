@@ -5,16 +5,19 @@ import (
 	"errors"
 
 	"alukart32.com/bank/entity"
+	"alukart32.com/bank/pkg/zerologx"
 	"github.com/google/uuid"
 )
 
 type entryService struct {
 	db EntryRepo
+	l  zerologx.Logger
 }
 
-func NewEntryService(r EntryRepo) EntryService {
+func NewEntryService(r EntryRepo, l zerologx.Logger) EntryService {
 	return &entryService{
 		db: r,
+		l:  l,
 	}
 }
 
@@ -26,7 +29,7 @@ func (s *entryService) Get(ctx context.Context, id int64) (entity.Entry, error) 
 	return entity.Entry{}, errors.New("not implemented yet")
 }
 
-func (s *entryService) Update(ctx context.Context, e entity.Entry) (entity.Entry, error) {
+func (s *entryService) UpdateAmount(ctx context.Context, e entity.Entry) (entity.Entry, error) {
 	return entity.Entry{}, errors.New("not implemented yet")
 }
 

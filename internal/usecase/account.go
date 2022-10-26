@@ -5,21 +5,24 @@ import (
 	"errors"
 
 	"alukart32.com/bank/entity"
+	"alukart32.com/bank/pkg/zerologx"
 	"github.com/google/uuid"
 )
 
 type accountService struct {
 	db AccountRepo
+	l  zerologx.Logger
 }
 
-func NewAccountService(r AccountRepo) AccountService {
+func NewAccountService(r AccountRepo, l zerologx.Logger) AccountService {
 	return &accountService{
 		db: r,
+		l:  l,
 	}
 }
 
-func (s *accountService) Create(ctx context.Context, a entity.Account) error {
-	return errors.New("not implemented yet")
+func (s *accountService) Create(ctx context.Context, a entity.Account) (uuid.UUID, error) {
+	return [16]byte{}, errors.New("not implemented yet")
 }
 
 func (s *accountService) Get(ctx context.Context, id uuid.UUID) (entity.Account, error) {
