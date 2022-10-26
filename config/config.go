@@ -31,7 +31,7 @@ type (
 		ShutdownTimeout time.Duration `env:"HTTP_SHUTDOWN_TIMEOUT" env-default:"3000us"`
 	}
 	Log struct {
-		Level string `env-required:"true" env:"LOG_LEVEL" env-default:"debug"`
+		Level string `env:"LOG_LEVEL" env-default:"debug"`
 	}
 	Config struct {
 		DB     DB
