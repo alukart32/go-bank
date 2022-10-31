@@ -34,7 +34,7 @@ func Run(cfg config.Config) {
 	transferService := usecase.NewTransferService(repo.NewTransferSQLRepo(db), &logger)
 
 	handler := v1.NewRouter(ginx.NewGinEngine(), &logger, accountService, entryService, transferService)
-	httpServer := httpserver.New(handler, cfg.Http)
+	httpServer := httpserver.New(handler, cfg.HTTP)
 
 	// Waiting signal
 	interrupt := make(chan os.Signal, 1)

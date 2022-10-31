@@ -23,7 +23,7 @@ var (
 
 func TestMain(m *testing.M) {
 	var err error
-	testConf, err = config.New("test")
+	testConf, err = config.New(config.Test)
 	if err != nil {
 		log.Fatal("cannot get config: ", err)
 	}
