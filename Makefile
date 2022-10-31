@@ -39,9 +39,6 @@ compose-down:
 up-stage:
 	docker compose -p account_app -f ./deployments/docker-compose.yml --profile stage up -d
 
-.PHONY: prepare-test
-prepare-test: up-test migrate-up
-
 .PHONY: up-test
 up-test:
 	docker compose -p account_app -f ./deployments/docker-compose.yml --profile test up -d

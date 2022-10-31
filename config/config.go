@@ -113,8 +113,8 @@ func New(profile string) (Config, error) {
 }
 
 // Print outputs the configuration in YAML format.
-func Print(c Config) {
-	if data, err := yaml.Marshal(&c); err != nil {
+func (c *Config) Print() {
+	if data, err := yaml.Marshal(c); err != nil {
 		log.Println("can not print config")
 	} else {
 		log.Printf("config data\n%s%v", "---\n", string(data))
