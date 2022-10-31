@@ -1,0 +1,14 @@
+# files
+Makefile
+Dockerfile
+.dockerignore
+sqlc.yaml
+*.md
+*.env
+
+# dirs
+/test
+/migrations
+/.github
+/deployments
+/assets
