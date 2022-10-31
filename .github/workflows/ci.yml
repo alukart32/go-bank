@@ -29,7 +29,7 @@ jobs:
         which migrate
 
     - name: Prepare tests
-      run: make prepare-test db_name=bank_test
+      run: make prepare-test db_name=bank_test db_uri=host.docker.internal:5432
 
     - name: Test
       run: make test
