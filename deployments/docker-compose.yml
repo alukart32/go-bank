@@ -1,0 +1,73 @@
+version: '3.9'
+services:
+  account-app:
+    image: account-app:0.1.1
+    container_name: account-app
+    depends_on:
+      - postgres
+      - keycloak
+    profiles:
+      - stage
+    networks:
+      - app_default
+      - input_traffic
+    ports:
+      - "8080:8080"
+      - "8443:8443"
+    volumes:
+      - ../.env:/app/.env
+    restart: unless-stopped
+
+  postgres:
+    image: "postgres:14-alpine"
+    container_name: postgres14
+    profiles:
+      - test
+      - stage
+    networks:
+      - app_default
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: "postgres"
+      POSTGRES_PASSWORD: "postgres"
+      PGDATA: "/data/postgres"
+    volumes:
+       - postgres:/data/postgres
+       - ./docker_postgres_init.sql:/docker-entrypoint-initdb.d/docker_postgres_init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+
+  keycloak:
+    image: jboss/keycloak:10.0.0
+    container_name: keycloak10
+    depends_on:
+      - postgres
+    profiles:
+      - stage
+    networks:
+      - app_default
+    ports:
+      - 18080:8080
+    environment:
+      DB_VENDOR: POSTGRES
+      DB_ADDR: postgres14
+      DB_DATABASE: keycloak
+      DB_USER: keycloak
+      DB_PASSWORD: keycloak
+      KEYCLOAK_USER: alukart32
+      KEYCLOAK_PASSWORD: alukart32@root
+    restart: unless-stopped
+
+volumes:
+    postgres:
+
+networks:
+  input_traffic:
+    external: true
+  app_default: {}
