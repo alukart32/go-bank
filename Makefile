@@ -1,5 +1,6 @@
 .PHONY: init-db postgres-up postgres-stop create-db drop-db migrate-up migrate-down sqlc test help
 
+network = input_traffic
 pg_name = postgres14
 pg_user = postgres
 pg_user_pass = postgres
@@ -15,30 +16,31 @@ help:
 	@echo    pg_image           - postgres docker image (default: $(pg_image))
 	@echo    pg_uri             - postgres uri (default: $(pg_uri))
 	@echo    db_name            - postgres main db (default: $(db_name))
+	@echo    network            - project external network (default: $(network))
 	@echo List of commands:
-	@echo   make init-db            - init a new db for service
-	@echo   make postgres-up        - run postgres docker container
-	@echo   make postgres-stop      - stop postgres docker container
-	@echo   make create-db          - create db in postgres
-	@echo   make drop-db            - drop db in postgres
+	@echo   make create-net         - create new docker net (default: $(network))
+	@echo   make compose-down       - docker compose down
+	@echo   make up-stage           - docker compose up stage profile
+	@echo   make up-test            - docker compose up test profile
 	@echo   make migrate-up         - start db migration, src - ./migrations
 	@echo   make migrate-down       - rollback db migration
 	@echo   make sqlc               - generate go files from sql
+	@echo   make prepare-test       - prepare before test: up-test and migrate-up
 	@echo   make test               - run all tests
 
-init-db: create-db migrate-up
+create-net:
+	docker network create $(network)
 
-postgres-up:
-	docker run --name $(pg_name) -e POSTGRES_USER=$(pg_user) -e POSTGRES_PASSWORD=$(pg_user_pass) -p 5432:5432 -d $(pg_image)
+compose-down:
+	docker compose -p account_app -f ./deployments/docker-compose.yml down
 
-postgres-stop:
-	docker stop $(pg_name)
+up-stage:
+	docker compose -p account_app -f ./deployments/docker-compose.yml --profile stage up -d
 
-create-db:
-	docker exec -it $(pg_name) createdb --username=$(pg_user) --owner=$(pg_user) $(db_name)
+prepare-test: up-test migrate-up
 
-drop-db:
-	docker exec -it $(pg_name) dropdb --username=$(pg_user) $(db_name)
+up-test:
+	docker compose -p account_app -f ./deployments/docker-compose.yml --profile test up -d
 
 migrate-up:
 	migrate -database "postgresql://$(pg_user):$(pg_user_pass)@$(pg_uri)/$(db_name)?sslmode=disable" -path migrations -verbose up
